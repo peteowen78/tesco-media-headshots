@@ -1,0 +1,789 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Tesco Media — Headshot Generator</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --blue:   #003ADC;
+      --pink:   #FF9BEB;
+      --plum:   #420040;
+      --lilac:  #FFD4F7;
+      --tonal:  #E4F3FF;
+      --white:  #ffffff;
+      --grey:   #f5f5f5;
+    }
+
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    body { font-family: 'Outfit', sans-serif; background: #fff; color: #111; min-height: 100vh; }
+
+    /* ── T-BOX SHAPE ── */
+    .t-box {
+      border-radius: 30% 30% 26% 26% / 22% 22% 18% 18%;
+      overflow: hidden;
+    }
+
+    /* ── LOZENGE ── */
+    .lozenge { border-radius: 9999px; }
+
+
+    /* ── HEADER ── */
+    header {
+      position: sticky; top: 0; z-index: 20;
+      background: #fff; border-bottom: 1px solid #e8e8e8;
+      padding: 14px 40px;
+      display: flex; align-items: center; justify-content: space-between;
+    }
+    .header-left  { display: flex; align-items: center; gap: 10px; }
+    .header-right { background: var(--lilac); color: var(--plum); font-weight: 700; font-size: 0.72rem;
+                    padding: 5px 14px; border-radius: 9999px; }
+
+    /* ── LAYOUT ── */
+    .container { max-width: 960px; margin: 0 auto; padding: 0 32px; }
+
+    /* ── HERO ── */
+    .hero { padding: 56px 0 40px; }
+    .hero-badge { background: var(--pink); color: var(--plum); font-weight: 700; font-size: 0.78rem;
+                  padding: 6px 16px; border-radius: 9999px; display: inline-block; margin-bottom: 20px; }
+    .hero h1 { font-weight: 900; font-size: clamp(2.6rem, 5vw, 4rem); line-height: 1;
+               color: var(--blue); margin-bottom: 16px; }
+    .hero p  { font-size: 1.1rem; color: #444; max-width: 440px; line-height: 1.55; }
+
+    /* ── STEP INDICATOR ── */
+    .steps { display: flex; align-items: center; gap: 8px; margin-bottom: 44px; }
+    .step-dot { width: 10px; height: 10px; border-radius: 50%; background: #ddd; flex-shrink: 0; transition: background 0.3s; }
+    .step-dot.active { background: var(--blue); }
+    .step-dot.done   { background: var(--pink); }
+    .step-label { font-size: 0.78rem; font-weight: 700; color: #aaa; transition: color 0.3s; }
+    .step-label.active { color: var(--blue); }
+    .step-label.done   { color: #888; }
+    .step-divider { width: 28px; height: 1px; background: #e0e0e0; flex-shrink: 0; }
+
+    /* ── UPLOAD ZONE ── */
+    .upload-label { cursor: pointer; display: inline-block; }
+    .upload-zone {
+      width: 220px; aspect-ratio: 3/4;
+      border: 2.5px dashed var(--blue);
+      border-radius: 30% 30% 26% 26% / 22% 22% 18% 18%;
+      display: flex; flex-direction: column; align-items: center; justify-content: center;
+      gap: 12px; padding: 28px 20px; text-align: center;
+      transition: background 0.2s, border-color 0.2s; cursor: pointer;
+      background: #fff;
+    }
+    .upload-zone:hover, .upload-zone.drag-over { background: var(--tonal); }
+    .upload-zone .icon-wrap {
+      width: 56px; height: 56px; border-radius: 50%; background: var(--tonal);
+      display: flex; align-items: center; justify-content: center;
+    }
+    .upload-zone p.up-title  { font-weight: 800; color: var(--blue); font-size: 0.9rem; }
+    .upload-zone p.up-sub    { color: #aaa; font-size: 0.75rem; margin-top: 2px; }
+    .upload-zone p.up-types  { color: #ccc; font-size: 0.72rem; margin-top: 6px; }
+
+    /* ── SELECTOR CHIPS ── */
+    .chip-group { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+    .chip {
+      border: 2px solid #e5e7eb; border-radius: 10px; padding: 11px 14px;
+      cursor: pointer; font-weight: 600; font-size: 0.85rem; color: #333;
+      transition: border-color 0.15s, background 0.15s, color 0.15s;
+    }
+    .chip:hover  { border-color: var(--blue); background: var(--tonal); }
+    .chip.active { border-color: var(--blue); background: var(--blue); color: #fff; }
+
+    /* ── INPUTS ── */
+    .tm-input {
+      width: 100%; border: 2px solid #e5e7eb; border-radius: 10px;
+      padding: 12px 14px; font-size: 0.875rem; font-family: 'Outfit', sans-serif;
+      color: #111; outline: none; transition: border-color 0.15s, box-shadow 0.15s;
+    }
+    .tm-input:focus { border-color: var(--blue); box-shadow: 0 0 0 3px rgba(0,58,220,0.08); }
+
+    /* ── BUTTONS ── */
+    .btn {
+      display: inline-flex; align-items: center; justify-content: center; gap: 8px;
+      border-radius: 9999px; padding: 14px 28px;
+      font-family: 'Outfit', sans-serif; font-weight: 700; font-size: 0.95rem;
+      cursor: pointer; border: none; transition: transform 0.15s, filter 0.15s;
+    }
+    .btn:hover:not(:disabled) { transform: translateY(-1px); filter: brightness(0.95); }
+    .btn:disabled { opacity: 0.45; cursor: not-allowed; }
+    .btn-blue  { background: var(--blue); color: #fff; }
+    .btn-pink  { background: var(--pink); color: var(--plum); }
+    .btn-ghost { background: #fff; color: #444; border: 2px solid #e5e7eb; }
+
+    /* ── TIPS ── */
+    .tip-row { display: flex; align-items: flex-start; gap: 10px; }
+    .tip-tag { border-radius: 9999px; padding: 3px 10px; font-size: 0.72rem; font-weight: 700; white-space: nowrap; }
+    .tip-tag.do    { background: var(--tonal); color: var(--blue); }
+    .tip-tag.avoid { background: var(--pink); color: var(--plum); }
+    .tip-text { font-size: 0.85rem; color: #555; line-height: 1.4; }
+
+    /* ── LOADING ── */
+    @keyframes spin { to { transform: rotate(360deg); } }
+    .spinner {
+      width: 44px; height: 44px; border-radius: 50%;
+      border: 3px solid var(--tonal); border-top-color: var(--blue);
+      animation: spin 0.75s linear infinite;
+    }
+    @keyframes pulse { 0%,100% { opacity: 1; } 50% { opacity: 0.5; } }
+    .pulse { animation: pulse 1.8s ease-in-out infinite; }
+
+    /* ── RESULT ── */
+    .result-image-wrap {
+      width: 260px; aspect-ratio: 3/4;
+      border-radius: 30% 30% 26% 26% / 22% 22% 18% 18%;
+      overflow: hidden; background: var(--grey);
+    }
+    .result-image-wrap img { width: 100%; height: 100%; object-fit: cover; display: block; }
+
+    .before-wrap {
+      width: 96px; aspect-ratio: 3/4;
+      border-radius: 30% 30% 26% 26% / 22% 22% 18% 18%;
+      overflow: hidden; background: var(--grey);
+    }
+    .before-wrap img { width: 100%; height: 100%; object-fit: cover; display: block; filter: grayscale(20%) brightness(0.95); }
+
+    /* ── INFO BOX ── */
+    .info-box {
+      background: var(--tonal); border-left: 4px solid var(--blue);
+      border-radius: 10px; padding: 14px 16px;
+    }
+    .info-box p { font-size: 0.82rem; color: #444; line-height: 1.5; }
+
+    /* ── ERROR ── */
+    .error-msg { color: #dc2626; font-size: 0.83rem; font-weight: 500; margin-top: 12px; display: none; }
+
+    /* ── FOOTER ── */
+    footer {
+      border-top: 1px solid #eee; margin-top: 96px; padding: 28px 40px;
+      display: flex; align-items: center; justify-content: space-between;
+    }
+    footer .foot-left { display: flex; align-items: center; gap: 6px; }
+    footer .foot-right { font-size: 0.75rem; color: #aaa; }
+
+    /* ── SECTION PANELS ── */
+    .panel { display: none; }
+    .panel.active { display: block; }
+
+    /* ── GRID ── */
+    .two-col { display: grid; grid-template-columns: 1fr 1fr; gap: 56px; align-items: start; }
+    @media (max-width: 680px) { .two-col { grid-template-columns: 1fr; gap: 36px; } }
+
+    /* ── FIELD LABEL ── */
+    .field-label { display: block; font-weight: 700; font-size: 0.87rem; color: #111; margin-bottom: 8px; }
+    .field-sub   { font-size: 0.78rem; color: #aaa; margin-bottom: 10px; }
+    .field-wrap  { margin-bottom: 24px; }
+  </style>
+</head>
+<body>
+
+<!-- ════════════════════════════════════ HEADER ═══ -->
+<header>
+  <div class="header-left">
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1417.32 490.55" height="50" aria-label="Tesco Media">
+      <defs><style>.tm-logo{fill:#003adc}</style></defs>
+      <polygon class="tm-logo" points="142.43 170.81 142.43 195.47 182.3 195.47 182.3 314.66 209.01 314.66 209.01 195.47 248.88 195.47 248.88 170.81 142.43 170.81"/>
+      <path class="tm-logo" d="M318.29,249.72c-.96-6.03-3.74-10.96-8.32-14.8-4.59-3.84-10.38-5.76-17.37-5.76-5.89,0-11.17,1.82-15.82,5.45-4.66,3.63-7.88,8.66-9.66,15.1h51.17ZM344.39,269.86h-78.3c1.37,7.81,4.59,13.74,9.66,17.78,5.07,4.04,11.23,6.06,18.49,6.06,6.03,0,11.06-1.26,15.11-3.8,4.04-2.53,7.91-6.4,11.61-11.61l21.58,11.71c-5.21,8.5-11.81,15-19.83,19.52-8.01,4.52-17.98,6.78-29.9,6.78-11.24,0-20.86-2.64-28.87-7.91-8.02-5.28-14.01-12.09-17.98-20.45-3.97-8.35-5.96-17.12-5.96-26.3s2.09-17.95,6.27-26.3c4.18-8.35,10.24-15.17,18.18-20.45,7.95-5.27,17.33-7.91,28.15-7.91s20.34,2.47,28.15,7.4c7.81,4.93,13.7,11.41,17.67,19.42,3.97,8.02,5.96,16.54,5.96,25.58v10.48Z"/>
+      <path class="tm-logo" d="M370.31,310.04c-7.26-4.18-12.88-10.18-16.85-17.98l18.29-15.42c6.3,11.38,15.07,17.06,26.3,17.06,4.38,0,7.94-.96,10.69-2.88,2.74-1.92,4.11-4.52,4.11-7.81s-1.78-5.75-5.34-7.81c-3.56-2.06-9.25-4.18-17.06-6.38-9.32-2.6-16.85-6.47-22.6-11.61-5.76-5.14-8.63-11.54-8.63-19.22,0-5.75,1.68-10.99,5.03-15.72,3.35-4.73,7.91-8.46,13.66-11.2,5.76-2.74,12.13-4.11,19.11-4.11,8.77,0,16.1,1.82,21.99,5.45,5.89,3.63,10.62,8.39,14.18,14.28l-16.44,14.18c-5.07-8.08-11.71-12.13-19.93-12.13-4.11,0-7.44.82-9.97,2.47-2.54,1.65-3.8,3.63-3.8,5.96,0,3.16,1.61,5.65,4.83,7.5,3.22,1.85,9.28,3.94,18.18,6.27,20.96,5.48,31.44,16.17,31.44,32.06,0,6.03-1.61,11.58-4.83,16.65-3.22,5.07-7.91,9.11-14.08,12.12-6.16,3.02-13.56,4.52-22.19,4.52-10.14,0-18.84-2.09-26.1-6.27"/>
+      <path class="tm-logo" d="M471.34,309.32c-8.08-4.66-14.39-11.13-18.91-19.42-4.52-8.29-6.78-17.71-6.78-28.26s2.26-19.97,6.78-28.26c4.52-8.29,10.82-14.76,18.91-19.41,8.08-4.66,17.33-6.99,27.74-6.99,23.56,0,39.52,9.66,47.88,28.97l-23.22,10.48c-5.34-10.68-13.56-16.02-24.66-16.02-7.95,0-14.52,2.87-19.73,8.63-5.21,5.75-7.81,13.29-7.81,22.6s2.6,16.85,7.81,22.6c5.2,5.75,11.78,8.63,19.73,8.63,11.1,0,19.32-5.34,24.66-16.02l23.22,10.48c-8.36,19.32-24.32,28.98-47.88,28.98-10.41,0-19.66-2.33-27.74-6.99"/>
+      <path class="tm-logo" d="M589.29,284.25c5.27,5.75,12.15,8.63,20.65,8.63s15.38-2.88,20.65-8.63c5.27-5.75,7.91-13.29,7.91-22.6s-2.64-16.85-7.91-22.6c-5.27-5.76-12.16-8.63-20.65-8.63s-15.38,2.88-20.65,8.63c-5.28,5.75-7.91,13.29-7.91,22.6s2.63,16.85,7.91,22.6M562.27,233.59c4.52-8.29,10.92-14.8,19.22-19.52,8.29-4.73,17.78-7.09,28.46-7.09s20.17,2.36,28.46,7.09c8.29,4.72,14.7,11.24,19.22,19.52,4.52,8.29,6.78,17.64,6.78,28.05s-2.26,19.76-6.78,28.05c-4.52,8.29-10.93,14.8-19.22,19.52-8.29,4.73-17.78,7.09-28.46,7.09s-20.18-2.36-28.46-7.09c-8.29-4.73-14.7-11.23-19.22-19.52-4.52-8.29-6.78-17.64-6.78-28.05s2.26-19.76,6.78-28.05"/>
+      <g>
+        <path class="tm-logo" d="M1026.91,230.03c-7.59,0-13.91,2.83-18.94,8.49-5.04,5.66-7.56,13.32-7.56,22.98s2.52,17.33,7.56,22.98c5.03,5.66,11.35,8.49,18.94,8.49s13.91-2.83,18.95-8.49c5.04-5.66,7.56-13.32,7.56-22.98s-2.52-17.32-7.56-22.98c-5.04-5.66-11.35-8.49-18.95-8.49Z"/>
+        <path class="tm-logo" d="M926.78,234.58c-4.62-3.86-10.45-5.8-17.49-5.8-5.94,0-11.25,1.83-15.94,5.49-4.69,3.66-7.94,8.73-9.73,15.22h51.55c-.97-6.07-3.76-11.04-8.39-14.91Z"/>
+        <path class="tm-logo" d="M1239.7,148.37s-141.25-4.57-266.46-4.57-263.66,4.57-263.66,4.57c-19.43,0-35.19,9.43-35.19,28.86v138.22c0,19.43,15.75,26.76,35.19,26.76,0,0,139.9,5.62,265.76,5.62s264.36-5.62,264.36-5.62c19.43,0,35.19-7.33,35.19-26.76v-138.22c0-19.43-15.75-28.86-35.19-28.86ZM843.73,314.92h-26.92v-88.2l-28.57,74.95h-20.29l-28.57-74.95v88.2h-26.91v-144.93h31.05l34.58,90.48,34.57-90.48h31.06v144.93ZM961.46,269.78h-78.88c1.38,7.87,4.62,13.84,9.73,17.91,5.1,4.08,11.31,6.11,18.64,6.11,6.07,0,11.14-1.27,15.22-3.83,4.07-2.55,7.97-6.45,11.7-11.7l21.74,11.8c-5.25,8.56-11.9,15.11-19.98,19.67-8.07,4.56-18.12,6.83-30.12,6.83-11.32,0-21.02-2.66-29.09-7.97-8.07-5.32-14.11-12.18-18.11-20.6-4.01-8.42-6.01-17.25-6.01-26.5s2.1-18.08,6.32-26.5c4.21-8.41,10.32-15.28,18.32-20.6,8-5.31,17.45-7.97,28.36-7.97s20.5,2.49,28.36,7.45c7.87,4.97,13.8,11.49,17.81,19.56,4,8.08,6.01,16.66,6.01,25.78v10.55ZM1077.43,314.92h-25.67v-12.83c-3.04,4.28-7.18,7.76-12.42,10.45-5.25,2.69-11.46,4.03-18.64,4.03-8.69,0-16.63-2.34-23.81-7.04-7.18-4.69-12.81-11.24-16.87-19.67-4.08-8.42-6.11-17.87-6.11-28.37s1.97-20.11,5.9-28.47c3.93-8.35,9.42-14.87,16.46-19.56,7.04-4.7,15.11-7.04,24.23-7.04,7.18,0,13.45,1.28,18.84,3.83,5.38,2.55,9.52,6.18,12.42,10.87v-52.79h25.67v146.58ZM1126.07,314.92h-25.67v-106.83h25.67v106.83ZM1125.04,194.21c-3.17,3.18-7.11,4.76-11.8,4.76s-8.63-1.58-11.8-4.76c-3.18-3.17-4.76-7.11-4.76-11.8s1.59-8.63,4.76-11.8c3.18-3.18,7.11-4.76,11.8-4.76s8.63,1.59,11.8,4.76c3.18,3.18,4.76,7.11,4.76,11.8s-1.59,8.63-4.76,11.8ZM1236.77,314.92h-21.12l-3.52-13.66c-3.45,4.69-7.83,8.42-13.14,11.18-5.32,2.76-11.56,4.14-18.74,4.14-6.21,0-12.08-1.24-17.6-3.72-5.52-2.49-9.94-6.11-13.25-10.87-3.31-4.76-4.97-10.45-4.97-17.08,0-10.49,3.93-18.94,11.8-25.36,7.87-6.42,18.5-9.62,31.88-9.62h22.98v-3.73c0-5.38-1.87-9.7-5.59-12.94-3.73-3.24-8.77-4.87-15.12-4.87-5.11,0-9.73,1.35-13.87,4.03-4.14,2.69-7.25,5.84-9.32,9.42l-19.67-11.8c3.72-6.76,9.24-12.39,16.56-16.87,7.31-4.49,16.08-6.73,26.29-6.73,14.63,0,26.02,3.52,34.16,10.56,8.14,7.04,12.21,17.19,12.21,30.44v67.49Z"/>
+        <path class="tm-logo" d="M1176.63,273.61c-3.52,2.28-5.28,5.42-5.28,9.42,0,3.73,1.28,6.6,3.83,8.59,2.55,2,6.31,3,11.28,3,6.9,0,12.73-2.07,17.5-6.21,4.76-4.14,7.14-9.24,7.14-15.32v-2.9h-20.29c-5.94,0-10.66,1.14-14.18,3.42Z"/>
+      </g>
+    </svg>
+  </div>
+  <div class="header-right">Headshot Generator</div>
+</header>
+
+
+<main class="container">
+
+  <!-- ══ HERO ══ -->
+  <section class="hero">
+    <div class="hero-badge">AI-powered ✦</div>
+    <h1>Selfie to<br>headshot.</h1>
+    <p>Upload a photo and get a professional Tesco&nbsp;Media headshot in seconds. Powered by Google Gemini.</p>
+  </section>
+
+  <!-- ══ PROGRESS ══ -->
+  <div class="steps" id="steps-bar">
+    <div class="step-dot active" id="sd1"></div>
+    <span class="step-label active" id="sl1">Upload</span>
+    <div class="step-divider"></div>
+    <div class="step-dot" id="sd2"></div>
+    <span class="step-label" id="sl2">Configure</span>
+    <div class="step-divider"></div>
+    <div class="step-dot" id="sd3"></div>
+    <span class="step-label" id="sl3">Result</span>
+  </div>
+
+  <!-- ════════════════ STEP 1 — UPLOAD ════════════════ -->
+  <div id="step1" class="panel active">
+    <div class="two-col">
+
+      <!-- Upload zone -->
+      <div>
+        <h2 style="font-weight:800;font-size:1.4rem;margin-bottom:8px;">Upload your selfie</h2>
+        <p style="color:#555;font-size:0.92rem;margin-bottom:24px;line-height:1.5;">A phone selfie works perfectly. Use good lighting and look straight into the camera for the best result.</p>
+
+        <label class="upload-label" for="file-input">
+          <div class="upload-zone" id="upload-zone">
+            <div class="icon-wrap">
+              <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="#003ADC" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+                <polyline points="17 8 12 3 7 8"/>
+                <line x1="12" y1="3" x2="12" y2="15"/>
+              </svg>
+            </div>
+            <div>
+              <p class="up-title">Click to upload</p>
+              <p class="up-sub">or drag &amp; drop</p>
+              <p class="up-types">JPG · PNG · WEBP up to 10 MB</p>
+            </div>
+          </div>
+        </label>
+        <input type="file" id="file-input" accept="image/*" style="display:none;">
+
+        <div id="upload-actions" style="display:none;margin-top:16px;">
+          <button class="btn btn-blue" onclick="goToStep2()" style="width:220px;">Continue →</button>
+          <label for="file-input" style="display:inline-block;margin-top:10px;">
+            <span style="font-size:0.83rem;color:#888;cursor:pointer;text-decoration:underline;">Change photo</span>
+          </label>
+        </div>
+      </div>
+
+      <!-- Tips -->
+      <div id="tips-panel">
+        <h3 style="font-weight:800;font-size:1rem;margin-bottom:16px;">Photo tips <span style="font-weight:400;color:#888;font-size:0.8rem;">— phone selfies work great</span></h3>
+        <div style="display:flex;flex-direction:column;gap:12px;">
+          <div class="tip-row"><span class="tip-tag do">Do</span><p class="tip-text">Phone front camera selfie is ideal — look straight into the lens with a relaxed expression</p></div>
+          <div class="tip-row"><span class="tip-tag do">Do</span><p class="tip-text">Good lighting makes the biggest difference — near a window or in a bright room works well</p></div>
+          <div class="tip-row"><span class="tip-tag do">Do</span><p class="tip-text">Frame from mid-chest up, head centred</p></div>
+          <div class="tip-row"><span class="tip-tag avoid">Avoid</span><p class="tip-text">Harsh shadows across your face or strong overhead lighting</p></div>
+          <div class="tip-row"><span class="tip-tag avoid">Avoid</span><p class="tip-text">Busy backgrounds — a plain wall behind you is perfect</p></div>
+          <div class="tip-row"><span class="tip-tag avoid">Avoid</span><p class="tip-text">Heavy filters, Snapchat lenses, or extreme angles</p></div>
+        </div>
+
+        <div style="margin-top:28px;">
+          <p style="font-weight:800;font-size:0.85rem;color:#111;margin-bottom:10px;">Target output</p>
+          <div style="display:flex;align-items:flex-end;gap:12px;">
+            <!-- Example output shape -->
+            <div style="width:90px;aspect-ratio:3/4;border-radius:30% 30% 26% 26%/22% 22% 18% 18%;background:var(--lilac);display:flex;align-items:center;justify-content:center;overflow:hidden;">
+              <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="var(--plum)" stroke-width="1.5" opacity="0.4">
+                <circle cx="12" cy="8" r="4"/><path d="M4 20c0-4 3.6-7 8-7s8 3 8 7"/>
+              </svg>
+            </div>
+            <p style="font-size:0.78rem;color:#888;line-height:1.5;max-width:180px;">Portrait in a T-Box shape with Tesco Media pink background</p>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+
+  <!-- ════════════════ STEP 2 — CONFIGURE ════════════════ -->
+  <div id="step2" class="panel">
+    <div class="two-col">
+
+      <!-- Config form -->
+      <div>
+        <h2 style="font-weight:800;font-size:1.4rem;margin-bottom:8px;">Configure your headshot</h2>
+        <p style="color:#555;font-size:0.92rem;margin-bottom:28px;line-height:1.5;">Choose your look and enter your API key to generate.</p>
+
+        <!-- Clothing -->
+        <div class="field-wrap">
+          <label class="field-label">Clothing style</label>
+          <div class="chip-group" id="clothing-chips">
+            <div class="chip active" data-val="a smart navy blazer over a white shirt" onclick="pickChip(this,'clothing-chips')">Smart casual</div>
+            <div class="chip" data-val="a black business suit and white shirt" onclick="pickChip(this,'clothing-chips')">Business formal</div>
+            <div class="chip" data-val="a bold colourful creative top" onclick="pickChip(this,'clothing-chips')">Creative casual</div>
+          </div>
+        </div>
+
+        <!-- Background colour -->
+        <div class="field-wrap">
+          <label class="field-label">Background colour <span style="font-weight:400;color:#aaa;font-size:0.78rem;">— person will be cut out &amp; placed on this</span></label>
+          <div class="chip-group" id="bg-chips">
+            <div class="chip" data-val="#FF9BEB" data-label="Tesco pink" onclick="pickChip(this,'bg-chips')" style="display:flex;align-items:center;gap:8px;"><span style="width:14px;height:14px;border-radius:50%;background:#FF9BEB;border:1px solid rgba(0,0,0,0.1);flex-shrink:0;display:inline-block;"></span>Tesco pink</div>
+            <div class="chip active" data-val="#FFD4F7" data-label="Lilac" onclick="pickChip(this,'bg-chips')" style="display:flex;align-items:center;gap:8px;"><span style="width:14px;height:14px;border-radius:50%;background:#FFD4F7;border:1px solid rgba(0,0,0,0.1);flex-shrink:0;display:inline-block;"></span>Tesco lilac</div>
+            <div class="chip" data-val="#003ADC" data-label="Tesco blue" onclick="pickChip(this,'bg-chips')" style="display:flex;align-items:center;gap:8px;"><span style="width:14px;height:14px;border-radius:50%;background:#003ADC;flex-shrink:0;display:inline-block;"></span>Tesco blue</div>
+            <div class="chip" data-val="#420040" data-label="Plum" onclick="pickChip(this,'bg-chips')" style="display:flex;align-items:center;gap:8px;"><span style="width:14px;height:14px;border-radius:50%;background:#420040;flex-shrink:0;display:inline-block;"></span>Plum</div>
+          </div>
+        </div>
+
+
+        <!-- Model selector -->
+        <div class="field-wrap">
+          <label class="field-label">Model <span style="font-weight:400;color:#aaa;font-size:0.78rem;">(try the next if one fails)</span></label>
+          <div class="chip-group" id="model-chips" style="grid-template-columns:1fr;">
+            <div class="chip active" data-val="gemini-2.0-flash-preview-image-generation" onclick="pickChip(this,'model-chips')">gemini-2.0-flash-preview-image-generation <span style="font-weight:400;color:#aaa;font-size:0.78rem;">— recommended</span></div>
+            <div class="chip" data-val="gemini-2.5-flash-image" onclick="pickChip(this,'model-chips')">gemini-2.5-flash-image <span style="font-weight:400;color:#aaa;font-size:0.78rem;">— alternative</span></div>
+          </div>
+        </div>
+
+        <div style="display:flex;gap:12px;align-items:center;">
+          <button class="btn btn-blue" onclick="generate()" id="gen-btn" style="flex:1;">Generate headshot ✦</button>
+          <button class="btn btn-ghost" onclick="goToStep1()">← Back</button>
+        </div>
+
+        <p class="error-msg" id="error-msg"></p>
+      </div>
+
+      <!-- Selfie preview -->
+      <div>
+        <p style="font-weight:700;font-size:0.85rem;color:#111;margin-bottom:10px;">Your selfie</p>
+        <div style="width:220px;aspect-ratio:3/4;border-radius:30% 30% 26% 26%/22% 22% 18% 18%;overflow:hidden;background:var(--grey);">
+          <img id="selfie-preview-2" src="" alt="Selfie preview" style="width:100%;height:100%;object-fit:cover;display:block;">
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+
+  <!-- ════════════════ STEP 3 — LOADING ════════════════ -->
+  <div id="step3" class="panel">
+    <div style="display:flex;flex-direction:column;align-items:center;text-align:center;padding:96px 0;gap:28px;">
+      <div class="spinner"></div>
+      <div>
+        <h2 class="pulse" style="font-weight:900;font-size:1.8rem;color:var(--blue);margin-bottom:10px;" id="loading-title">Generating your headshot…</h2>
+        <p style="color:#888;font-size:0.92rem;" id="loading-sub">This usually takes 30–60 seconds across two steps. Please keep this window open.</p>
+      </div>
+      <!-- Two-step progress track -->
+      <div style="display:flex;align-items:center;gap:0;background:var(--grey);border-radius:9999px;padding:6px 8px;gap:4px;">
+        <div id="lp1" class="lozenge" style="background:var(--blue);color:#fff;font-weight:700;font-size:0.75rem;padding:6px 16px;transition:all 0.3s;">1 · Create portrait</div>
+        <div style="width:20px;height:2px;background:#ddd;flex-shrink:0;"></div>
+        <div id="lp2" class="lozenge" style="background:#ddd;color:#aaa;font-weight:700;font-size:0.75rem;padding:6px 16px;transition:all 0.3s;">2 · Cut out &amp; place</div>
+      </div>
+    </div>
+  </div>
+
+
+  <!-- ════════════════ STEP 4 — RESULT ════════════════ -->
+  <div id="step4" class="panel">
+    <div class="two-col">
+
+      <!-- Actions -->
+      <div>
+        <div style="margin-bottom:14px;">
+          <span class="lozenge" style="background:var(--pink);color:var(--plum);padding:6px 16px;font-weight:700;font-size:0.78rem;">Ready ✓</span>
+        </div>
+        <h2 style="font-weight:900;font-size:2.2rem;color:var(--blue);line-height:1.05;margin-bottom:14px;">Your headshot<br>is ready.</h2>
+        <p style="color:#555;font-size:0.92rem;line-height:1.55;margin-bottom:32px;max-width:360px;">Download your new professional Tesco&nbsp;Media headshot. Not happy? Generate again — each run may vary slightly.</p>
+
+        <div style="display:flex;flex-direction:column;gap:12px;max-width:300px;">
+          <button class="btn btn-blue" onclick="downloadResult()" style="width:100%;">↓ Download headshot</button>
+          <button class="btn btn-pink" onclick="regenerate()" style="width:100%;">↺ Regenerate</button>
+          <button class="btn btn-ghost" onclick="startOver()" style="width:100%;">Start over</button>
+        </div>
+
+        <div class="info-box" style="margin-top:28px;max-width:340px;">
+          <p>If the likeness isn't quite right, try regenerating. Results may vary — keep generating until you get one that fits the Tesco Media style.</p>
+        </div>
+
+        <!-- Before / after -->
+        <div style="display:flex;align-items:flex-end;gap:16px;margin-top:32px;">
+          <div>
+            <p style="font-size:0.7rem;font-weight:700;color:#aaa;margin-bottom:6px;letter-spacing:0.04em;">BEFORE</p>
+            <div class="before-wrap"><img id="before-img" src="" alt="Before"></div>
+          </div>
+          <div style="font-size:1.4rem;color:#ccc;padding-bottom:20px;">→</div>
+          <div>
+            <p style="font-size:0.7rem;font-weight:700;color:var(--blue);margin-bottom:6px;letter-spacing:0.04em;">AFTER</p>
+            <div class="before-wrap" style="width:96px;"><img id="after-thumb" src="" alt="After headshot"></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Result image -->
+      <div>
+        <p style="font-weight:700;font-size:0.85rem;color:#111;margin-bottom:12px;">Your headshot</p>
+        <div class="result-image-wrap">
+          <img id="result-img" src="" alt="Generated headshot">
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+</main>
+
+
+<!-- ════════════════════════════════════ FOOTER ═══ -->
+<footer>
+  <div class="foot-left">
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1417.32 490.55" height="22" aria-label="Tesco Media" style="opacity:0.7;">
+      <defs><style>.tm-logo-ft{fill:#003adc}</style></defs>
+      <polygon class="tm-logo-ft" points="142.43 170.81 142.43 195.47 182.3 195.47 182.3 314.66 209.01 314.66 209.01 195.47 248.88 195.47 248.88 170.81 142.43 170.81"/>
+      <path class="tm-logo-ft" d="M318.29,249.72c-.96-6.03-3.74-10.96-8.32-14.8-4.59-3.84-10.38-5.76-17.37-5.76-5.89,0-11.17,1.82-15.82,5.45-4.66,3.63-7.88,8.66-9.66,15.1h51.17ZM344.39,269.86h-78.3c1.37,7.81,4.59,13.74,9.66,17.78,5.07,4.04,11.23,6.06,18.49,6.06,6.03,0,11.06-1.26,15.11-3.8,4.04-2.53,7.91-6.4,11.61-11.61l21.58,11.71c-5.21,8.5-11.81,15-19.83,19.52-8.01,4.52-17.98,6.78-29.9,6.78-11.24,0-20.86-2.64-28.87-7.91-8.02-5.28-14.01-12.09-17.98-20.45-3.97-8.35-5.96-17.12-5.96-26.3s2.09-17.95,6.27-26.3c4.18-8.35,10.24-15.17,18.18-20.45,7.95-5.27,17.33-7.91,28.15-7.91s20.34,2.47,28.15,7.4c7.81,4.93,13.7,11.41,17.67,19.42,3.97,8.02,5.96,16.54,5.96,25.58v10.48Z"/>
+      <path class="tm-logo-ft" d="M370.31,310.04c-7.26-4.18-12.88-10.18-16.85-17.98l18.29-15.42c6.3,11.38,15.07,17.06,26.3,17.06,4.38,0,7.94-.96,10.69-2.88,2.74-1.92,4.11-4.52,4.11-7.81s-1.78-5.75-5.34-7.81c-3.56-2.06-9.25-4.18-17.06-6.38-9.32-2.6-16.85-6.47-22.6-11.61-5.76-5.14-8.63-11.54-8.63-19.22,0-5.75,1.68-10.99,5.03-15.72,3.35-4.73,7.91-8.46,13.66-11.2,5.76-2.74,12.13-4.11,19.11-4.11,8.77,0,16.1,1.82,21.99,5.45,5.89,3.63,10.62,8.39,14.18,14.28l-16.44,14.18c-5.07-8.08-11.71-12.13-19.93-12.13-4.11,0-7.44.82-9.97,2.47-2.54,1.65-3.8,3.63-3.8,5.96,0,3.16,1.61,5.65,4.83,7.5,3.22,1.85,9.28,3.94,18.18,6.27,20.96,5.48,31.44,16.17,31.44,32.06,0,6.03-1.61,11.58-4.83,16.65-3.22,5.07-7.91,9.11-14.08,12.12-6.16,3.02-13.56,4.52-22.19,4.52-10.14,0-18.84-2.09-26.1-6.27"/>
+      <path class="tm-logo-ft" d="M471.34,309.32c-8.08-4.66-14.39-11.13-18.91-19.42-4.52-8.29-6.78-17.71-6.78-28.26s2.26-19.97,6.78-28.26c4.52-8.29,10.82-14.76,18.91-19.41,8.08-4.66,17.33-6.99,27.74-6.99,23.56,0,39.52,9.66,47.88,28.97l-23.22,10.48c-5.34-10.68-13.56-16.02-24.66-16.02-7.95,0-14.52,2.87-19.73,8.63-5.21,5.75-7.81,13.29-7.81,22.6s2.6,16.85,7.81,22.6c5.2,5.75,11.78,8.63,19.73,8.63,11.1,0,19.32-5.34,24.66-16.02l23.22,10.48c-8.36,19.32-24.32,28.98-47.88,28.98-10.41,0-19.66-2.33-27.74-6.99"/>
+      <path class="tm-logo-ft" d="M589.29,284.25c5.27,5.75,12.15,8.63,20.65,8.63s15.38-2.88,20.65-8.63c5.27-5.75,7.91-13.29,7.91-22.6s-2.64-16.85-7.91-22.6c-5.27-5.76-12.16-8.63-20.65-8.63s-15.38,2.88-20.65,8.63c-5.28,5.75-7.91,13.29-7.91,22.6s2.63,16.85,7.91,22.6M562.27,233.59c4.52-8.29,10.92-14.8,19.22-19.52,8.29-4.73,17.78-7.09,28.46-7.09s20.17,2.36,28.46,7.09c8.29,4.72,14.7,11.24,19.22,19.52,4.52,8.29,6.78,17.64,6.78,28.05s-2.26,19.76-6.78,28.05c-4.52,8.29-10.93,14.8-19.22,19.52-8.29,4.73-17.78,7.09-28.46,7.09s-20.18-2.36-28.46-7.09c-8.29-4.73-14.7-11.23-19.22-19.52-4.52-8.29-6.78-17.64-6.78-28.05s2.26-19.76,6.78-28.05"/>
+      <g>
+        <path class="tm-logo-ft" d="M1026.91,230.03c-7.59,0-13.91,2.83-18.94,8.49-5.04,5.66-7.56,13.32-7.56,22.98s2.52,17.33,7.56,22.98c5.03,5.66,11.35,8.49,18.94,8.49s13.91-2.83,18.95-8.49c5.04-5.66,7.56-13.32,7.56-22.98s-2.52-17.32-7.56-22.98c-5.04-5.66-11.35-8.49-18.95-8.49Z"/>
+        <path class="tm-logo-ft" d="M926.78,234.58c-4.62-3.86-10.45-5.8-17.49-5.8-5.94,0-11.25,1.83-15.94,5.49-4.69,3.66-7.94,8.73-9.73,15.22h51.55c-.97-6.07-3.76-11.04-8.39-14.91Z"/>
+        <path class="tm-logo-ft" d="M1239.7,148.37s-141.25-4.57-266.46-4.57-263.66,4.57-263.66,4.57c-19.43,0-35.19,9.43-35.19,28.86v138.22c0,19.43,15.75,26.76,35.19,26.76,0,0,139.9,5.62,265.76,5.62s264.36-5.62,264.36-5.62c19.43,0,35.19-7.33,35.19-26.76v-138.22c0-19.43-15.75-28.86-35.19-28.86ZM843.73,314.92h-26.92v-88.2l-28.57,74.95h-20.29l-28.57-74.95v88.2h-26.91v-144.93h31.05l34.58,90.48,34.57-90.48h31.06v144.93ZM961.46,269.78h-78.88c1.38,7.87,4.62,13.84,9.73,17.91,5.1,4.08,11.31,6.11,18.64,6.11,6.07,0,11.14-1.27,15.22-3.83,4.07-2.55,7.97-6.45,11.7-11.7l21.74,11.8c-5.25,8.56-11.9,15.11-19.98,19.67-8.07,4.56-18.12,6.83-30.12,6.83-11.32,0-21.02-2.66-29.09-7.97-8.07-5.32-14.11-12.18-18.11-20.6-4.01-8.42-6.01-17.25-6.01-26.5s2.1-18.08,6.32-26.5c4.21-8.41,10.32-15.28,18.32-20.6,8-5.31,17.45-7.97,28.36-7.97s20.5,2.49,28.36,7.45c7.87,4.97,13.8,11.49,17.81,19.56,4,8.08,6.01,16.66,6.01,25.78v10.55ZM1077.43,314.92h-25.67v-12.83c-3.04,4.28-7.18,7.76-12.42,10.45-5.25,2.69-11.46,4.03-18.64,4.03-8.69,0-16.63-2.34-23.81-7.04-7.18-4.69-12.81-11.24-16.87-19.67-4.08-8.42-6.11-17.87-6.11-28.37s1.97-20.11,5.9-28.47c3.93-8.35,9.42-14.87,16.46-19.56,7.04-4.7,15.11-7.04,24.23-7.04,7.18,0,13.45,1.28,18.84,3.83,5.38,2.55,9.52,6.18,12.42,10.87v-52.79h25.67v146.58ZM1126.07,314.92h-25.67v-106.83h25.67v106.83ZM1125.04,194.21c-3.17,3.18-7.11,4.76-11.8,4.76s-8.63-1.58-11.8-4.76c-3.18-3.17-4.76-7.11-4.76-11.8s1.59-8.63,4.76-11.8c3.18-3.18,7.11-4.76,11.8-4.76s8.63,1.59,11.8,4.76c3.18,3.18,4.76,7.11,4.76,11.8s-1.59,8.63-4.76,11.8ZM1236.77,314.92h-21.12l-3.52-13.66c-3.45,4.69-7.83,8.42-13.14,11.18-5.32,2.76-11.56,4.14-18.74,4.14-6.21,0-12.08-1.24-17.6-3.72-5.52-2.49-9.94-6.11-13.25-10.87-3.31-4.76-4.97-10.45-4.97-17.08,0-10.49,3.93-18.94,11.8-25.36,7.87-6.42,18.5-9.62,31.88-9.62h22.98v-3.73c0-5.38-1.87-9.7-5.59-12.94-3.73-3.24-8.77-4.87-15.12-4.87-5.11,0-9.73,1.35-13.87,4.03-4.14,2.69-7.25,5.84-9.32,9.42l-19.67-11.8c3.72-6.76,9.24-12.39,16.56-16.87,7.31-4.49,16.08-6.73,26.29-6.73,14.63,0,26.02,3.52,34.16,10.56,8.14,7.04,12.21,17.19,12.21,30.44v67.49Z"/>
+        <path class="tm-logo-ft" d="M1176.63,273.61c-3.52,2.28-5.28,5.42-5.28,9.42,0,3.73,1.28,6.6,3.83,8.59,2.55,2,6.31,3,11.28,3,6.9,0,12.73-2.07,17.5-6.21,4.76-4.14,7.14-9.24,7.14-15.32v-2.9h-20.29c-5.94,0-10.66,1.14-14.18,3.42Z"/>
+      </g>
+    </svg>
+    <span style="color:#ccc;font-size:0.75rem;margin-left:8px;">Headshot Generator</span>
+  </div>
+  <div class="foot-right">Powered by Google Gemini</div>
+</footer>
+
+
+<script>
+  /* ─── STATE ─── */
+  let selfieDataUrl   = null;
+  let selfieBase64    = null;
+  let selfieMimeType  = null;
+  let resultDataUrl   = null;
+
+  /* ─── STEP NAVIGATION ─── */
+  function showStep(n) {
+    ['step1','step2','step3','step4'].forEach((id,i) => {
+      document.getElementById(id).classList.toggle('active', i+1 === n);
+    });
+    // dots
+    for (let i = 1; i <= 3; i++) {
+      const dot   = document.getElementById('sd'+i);
+      const label = document.getElementById('sl'+i);
+      dot.classList.remove('active','done');
+      label.classList.remove('active','done');
+      if      (i < n)  { dot.classList.add('done');   label.classList.add('done'); }
+      else if (i === n) { dot.classList.add('active'); label.classList.add('active'); }
+    }
+    window.scrollTo(0,0);
+  }
+
+  function goToStep1() { showStep(1); }
+  function goToStep2() {
+    if (!selfieBase64) { alert('Please upload a selfie first.'); return; }
+    document.getElementById('selfie-preview-2').src = selfieDataUrl;
+    showStep(2);
+  }
+
+  /* ─── FILE HANDLING ─── */
+  const fileInput  = document.getElementById('file-input');
+  const uploadZone = document.getElementById('upload-zone');
+
+  fileInput.addEventListener('change', e => { if (e.target.files[0]) loadFile(e.target.files[0]); });
+
+  uploadZone.addEventListener('dragover',  e => { e.preventDefault(); uploadZone.classList.add('drag-over'); });
+  uploadZone.addEventListener('dragleave', ()  => uploadZone.classList.remove('drag-over'));
+  uploadZone.addEventListener('drop',      e  => {
+    e.preventDefault(); uploadZone.classList.remove('drag-over');
+    if (e.dataTransfer.files[0]) loadFile(e.dataTransfer.files[0]);
+  });
+
+  function loadFile(file) {
+    if (!file.type.startsWith('image/')) { alert('Please upload an image file (JPG, PNG, or WEBP).'); return; }
+    if (file.size > 10 * 1024 * 1024)   { alert('Please use an image under 10 MB.'); return; }
+    selfieMimeType = file.type || 'image/jpeg';
+    const reader = new FileReader();
+    reader.onload = e => {
+      const raw = e.target.result;
+      resizeImage(raw, 1200, 1600).then(resized => {
+        selfieDataUrl = resized;
+        selfieBase64  = resized.split(',')[1];
+        // Preview in upload zone
+        uploadZone.style.padding = '0';
+        uploadZone.style.border  = '2.5px solid var(--blue)';
+        uploadZone.innerHTML     = `<img src="${selfieDataUrl}" style="width:100%;height:100%;object-fit:cover;border-radius:inherit;display:block;">`;
+        document.getElementById('upload-actions').style.display = 'block';
+      });
+    };
+    reader.readAsDataURL(file);
+  }
+
+  function resizeImage(dataUrl, maxW, maxH) {
+    return new Promise(resolve => {
+      const img = new Image();
+      img.onload = () => {
+        let w = img.width, h = img.height;
+        if (w > maxW) { h = h * maxW / w; w = maxW; }
+        if (h > maxH) { w = w * maxH / h; h = maxH; }
+        const c = document.createElement('canvas');
+        c.width = w; c.height = h;
+        c.getContext('2d').drawImage(img, 0, 0, w, h);
+        resolve(c.toDataURL('image/jpeg', 0.88));
+      };
+      img.src = dataUrl;
+    });
+  }
+
+  /* ─── CHIPS ─── */
+  function pickChip(el, groupId) {
+    document.querySelectorAll('#'+groupId+' .chip').forEach(c => c.classList.remove('active'));
+    el.classList.add('active');
+  }
+  function getChipVal(groupId) {
+    return document.querySelector('#'+groupId+' .chip.active')?.dataset.val || '';
+  }
+
+  /* ─── COMPRESS: resize a base64 image to JPEG before API calls ─── */
+  /* ─── REPLACE BACKGROUND: sample actual corner colour, flood-fill outward with exact brand colour ─── */
+  /* (no canvas post-processing — portrait generated directly on brand colour) */
+
+  function compressBase64Image(b64, mime, maxW, maxH, quality) {
+    return new Promise(resolve => {
+      const img = new Image();
+      img.onload = () => {
+        let w = img.width, h = img.height;
+        if (w > maxW) { h = Math.round(h * maxW / w); w = maxW; }
+        if (h > maxH) { w = Math.round(w * maxH / h); h = maxH; }
+        const c = document.createElement('canvas');
+        c.width = w; c.height = h;
+        c.getContext('2d').drawImage(img, 0, 0, w, h);
+        resolve({ base64: c.toDataURL('image/jpeg', quality || 0.85).split(',')[1], mime: 'image/jpeg' });
+      };
+      img.onerror = () => resolve({ base64: b64, mime }); // fallback: return original
+      img.src = `data:${mime};base64,${b64}`;
+    });
+  }
+
+  /* ─── SHARED: call Gemini image-gen with an image input ─── */
+  // MODEL FALLBACK ORDER — tried in sequence if a model returns "not found/supported"
+  const MODEL_FALLBACKS = [
+    'gemini-2.0-flash-preview-image-generation',
+    'gemini-2.5-flash-image'
+  ];
+
+  async function callGeminiModel(model, imgBase64, imgMime, prompt) {
+    const res = await fetch('/api/gemini', {
+      method:  'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ model, imgBase64, imgMime, prompt })
+    });
+
+    if (!res.ok) {
+      const err = await res.json().catch(() => ({}));
+      const msg = err?.error?.message || `API error ${res.status}`;
+      if (msg.toLowerCase().includes('not found') || msg.toLowerCase().includes('not support') ||
+          msg.toLowerCase().includes('invalid') || res.status === 404) {
+        const e = new Error(msg); e.modelNotFound = true; throw e;
+      }
+      throw new Error(msg);
+    }
+
+    const data  = await res.json();
+    const parts = data?.candidates?.[0]?.content?.parts || [];
+    const imgPt = parts.find(p => p.inlineData?.data);
+    if (!imgPt) {
+      // Check if blocked
+      const finishReason = data?.candidates?.[0]?.finishReason;
+      if (finishReason === 'SAFETY' || finishReason === 'RECITATION') {
+        throw new Error('The request was blocked by safety filters. Please try a different photo or adjust your settings.');
+      }
+      throw new Error('No image returned from model. It may have filtered the request — please try again.');
+    }
+
+    return { base64: imgPt.inlineData.data, mime: imgPt.inlineData.mimeType || 'image/png' };
+  }
+
+  async function callGemini(preferredModel, imgBase64, imgMime, prompt) {
+    const order = [preferredModel, ...MODEL_FALLBACKS.filter(m => m !== preferredModel)];
+    let lastErr;
+    for (const model of order) {
+      try {
+        return await callGeminiModel(model, imgBase64, imgMime, prompt);
+      } catch (e) {
+        lastErr = e;
+        if (!e.modelNotFound) throw e; // non-model error — stop immediately
+        console.warn(`Model "${model}" unavailable, trying next fallback…`);
+      }
+    }
+    throw new Error(`None of the available models could be reached. Last error: ${lastErr?.message}`);
+  }
+
+  /* ─── SET LOADING STATE ─── */
+  function setLoadingStep(n) {
+    const titles = ['', 'Generating your headshot…', ''];
+    const subs   = ['', 'Creating a studio portrait from your selfie. Usually takes 20–40 sec.', ''];
+    document.getElementById('loading-title').innerHTML = titles[n];
+    document.getElementById('loading-sub').textContent  = subs[n];
+    document.getElementById('lp1').style.background = n >= 1 ? 'var(--blue)'  : '#ddd';
+    document.getElementById('lp1').style.color      = n >= 1 ? '#fff'         : '#aaa';
+    document.getElementById('lp2').style.background = n >= 2 ? 'var(--pink)'  : '#ddd';
+    document.getElementById('lp2').style.color      = n >= 2 ? 'var(--plum)'  : '#aaa';
+  }
+
+  /* ─── COLOUR DESCRIPTIONS — helps Gemini match brand hex more precisely ─── */
+  const BG_COLOUR_DESCRIPTIONS = {
+    '#FF9BEB': 'bright vivid bubblegum candy pink — RGB(255,155,235) — a warm, saturated, clearly pink colour with absolutely no purple or violet cast',
+    '#FFD4F7': 'very pale pastel powder pink — RGB(255,212,247) — an extremely light, near-white blush; think white paper with just the faintest breath of soft pink warmth. It is NOT purple, NOT lavender, NOT lilac, NOT violet. It is a barely-there pale PINK, almost white',
+    '#003ADC': 'vivid saturated royal cobalt blue — RGB(0,58,220) — a bright, deep, pure blue with no purple or teal tint',
+    '#420040': 'very deep dark plum maroon — RGB(66,0,64) — an extremely dark, rich purple-maroon, nearly black',
+  };
+
+  /* ─── POST-PROCESS: nudge background pixels to exact brand hex ─── */
+  async function fixBackgroundColor(imgDataUrl, targetHex) {
+    return new Promise((resolve) => {
+      const img = new Image();
+      img.onload = function () {
+        try {
+          const canvas = document.createElement('canvas');
+          canvas.width  = img.naturalWidth  || img.width;
+          canvas.height = img.naturalHeight || img.height;
+          const ctx = canvas.getContext('2d');
+          ctx.drawImage(img, 0, 0);
+
+          const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+          const px = imageData.data;
+          const w  = canvas.width, h = canvas.height;
+
+          // Sample 6×6 patches at all four corners → estimate generated BG colour
+          function samplePatch(x, y, sz) {
+            let r = 0, g = 0, b = 0, n = 0;
+            for (let dy = 0; dy < sz; dy++) {
+              for (let dx = 0; dx < sz; dx++) {
+                const i = ((y + dy) * w + (x + dx)) * 4;
+                if (i >= 0 && i + 2 < px.length) { r += px[i]; g += px[i+1]; b += px[i+2]; n++; }
+              }
+            }
+            return n ? [r/n, g/n, b/n] : [128, 128, 128];
+          }
+          const pts = [samplePatch(0,0,6), samplePatch(w-6,0,6), samplePatch(0,h-6,6), samplePatch(w-6,h-6,6)];
+          const bgR = pts.reduce((s,c)=>s+c[0],0) / 4;
+          const bgG = pts.reduce((s,c)=>s+c[1],0) / 4;
+          const bgB = pts.reduce((s,c)=>s+c[2],0) / 4;
+
+          // Target hex → RGB
+          const tr = parseInt(targetHex.slice(1,3), 16);
+          const tg = parseInt(targetHex.slice(3,5), 16);
+          const tb = parseInt(targetHex.slice(5,7), 16);
+
+          // Shift every pixel that is "close enough" to the sampled BG colour
+          const threshold = 65;
+          for (let i = 0; i < px.length; i += 4) {
+            const dr = px[i]   - bgR;
+            const dg = px[i+1] - bgG;
+            const db = px[i+2] - bgB;
+            const dist = Math.sqrt(dr*dr + dg*dg + db*db);
+            if (dist < threshold) {
+              const t = 1 - dist / threshold; // blend: 1.0 at centre, 0 at edge
+              px[i]   = Math.round(px[i]   + t * (tr - bgR));
+              px[i+1] = Math.round(px[i+1] + t * (tg - bgG));
+              px[i+2] = Math.round(px[i+2] + t * (tb - bgB));
+            }
+          }
+
+          ctx.putImageData(imageData, 0, 0);
+          resolve(canvas.toDataURL('image/jpeg', 0.93));
+        } catch (e) {
+          console.warn('fixBackgroundColor failed, using original:', e);
+          resolve(imgDataUrl);
+        }
+      };
+      img.onerror = () => resolve(imgDataUrl);
+      img.src = imgDataUrl;
+    });
+  }
+
+  /* ─── MAIN GENERATE (single Gemini call, portrait on brand colour) ─── */
+  async function generate() {
+    const clothing = getChipVal('clothing-chips');
+    const bgHex   = getChipVal('bg-chips');
+    const bgLabel = document.querySelector('#bg-chips .chip.active')?.dataset.label || 'brand colour';
+    const model   = getChipVal('model-chips') || 'gemini-2.0-flash-preview-image-generation';
+
+    if (!selfieBase64){ showError('Please upload a selfie first.'); return; }
+
+    showError('');
+    showStep(3);
+    setLoadingStep(1);
+
+    try {
+      const bgDesc = BG_COLOUR_DESCRIPTIONS[bgHex] || `${bgLabel} — hex ${bgHex}`;
+
+      const prompt = `[P1—STRUCTURE]
+Camera: high-end full-frame digital camera, professional studio portrait
+Lens: 85mm portrait prime
+Shot: very tight crop — frame from mid-chest upward only. Head fills roughly 50% of frame height. Minimal space above head (max 5% of frame). Face centred, eye-level.
+Lighting: soft directional studio light, gentle fill opposite side
+
+[P2—STYLE]
+Clean editorial studio headshot. Modern, confident, approachable. High-end professional portrait photography.
+
+[CONTENT]
+Transform this selfie into a crisp professional headshot. Preserve the subject's exact likeness, face, hair, skin tone, and features precisely — do NOT alter their appearance. Clothing: ${clothing}. Natural, confident posture. Subject must fill the majority of the frame — no large empty areas above the head or at the sides.
+
+BACKGROUND: Fill the entire background with a single flat, solid, uniform colour: ${bgDesc} (hex ${bgHex}, RGB ${parseInt(bgHex.slice(1,3),16)} ${parseInt(bgHex.slice(3,5),16)} ${parseInt(bgHex.slice(5,7),16)}). This exact RGB value must be used — not a similar shade, not darker, not more saturated. No gradients, no shadows cast on background, no vignette, no texture. Every background pixel must be this single colour.
+
+[REFINEMENT]
+No heavy retouching. No lens distortion. No oversaturation. Do not change the person's identity.`;
+
+      const result = await callGemini(model, selfieBase64, selfieMimeType || 'image/jpeg', prompt);
+      resultDataUrl = `data:${result.mime};base64,${result.base64}`;
+      // Post-process: nudge generated background pixels to exact brand hex
+      resultDataUrl = await fixBackgroundColor(resultDataUrl, bgHex);
+    } catch (err) {
+      console.error('Generation error:', err);
+      showStep(2);
+      showError('Generation failed: ' + err.message);
+      return;
+    }
+
+    document.getElementById('result-img').src  = resultDataUrl;
+    document.getElementById('after-thumb').src = resultDataUrl;
+    document.getElementById('before-img').src  = selfieDataUrl;
+    showStep(4);
+  }
+
+  function regenerate() {
+    showStep(2);
+    // Small delay then auto-generate
+    setTimeout(generate, 100);
+  }
+
+  /* ─── DOWNLOAD ─── */
+  function downloadResult() {
+    if (!resultDataUrl) return;
+    const a = document.createElement('a');
+    a.href     = resultDataUrl;
+    a.download = 'tesco-media-headshot.png';
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+  }
+
+  /* ─── START OVER ─── */
+  function startOver() {
+    selfieDataUrl = selfieBase64 = selfieMimeType = resultDataUrl = null;
+    document.getElementById('file-input').value = '';
+    // Reset upload zone
+    uploadZone.style.padding = '';
+    uploadZone.style.border  = '2.5px dashed var(--blue)';
+    uploadZone.style.background = '';
+    uploadZone.innerHTML = `
+      <div class="icon-wrap">
+        <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="#003ADC" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+          <polyline points="17 8 12 3 7 8"/>
+          <line x1="12" y1="3" x2="12" y2="15"/>
+        </svg>
+      </div>
+      <div>
+        <p class="up-title">Click to upload</p>
+        <p class="up-sub">or drag &amp; drop</p>
+        <p class="up-types">JPG · PNG · WEBP up to 10 MB</p>
+      </div>`;
+    document.getElementById('upload-actions').style.display = 'none';
+    showStep(1);
+  }
+
+  /* ─── ERROR ─── */
+  function showError(msg) {
+    const el = document.getElementById('error-msg');
+    el.textContent = msg;
+    el.style.display = msg ? 'block' : 'none';
+  }
+</script>
+</body>
+</html>
