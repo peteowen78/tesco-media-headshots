@@ -296,15 +296,6 @@
         <h2 style="font-weight:800;font-size:1.4rem;margin-bottom:8px;">Configure your headshot</h2>
         <p style="color:#555;font-size:0.92rem;margin-bottom:28px;line-height:1.5;">Choose your look and enter your API key to generate.</p>
 
-        <!-- Clothing -->
-        <div class="field-wrap">
-          <label class="field-label">Clothing style</label>
-          <div class="chip-group" id="clothing-chips">
-            <div class="chip active" data-val="a smart navy blazer over a white shirt" onclick="pickChip(this,'clothing-chips')">Smart casual</div>
-            <div class="chip" data-val="a black business suit and white shirt" onclick="pickChip(this,'clothing-chips')">Business formal</div>
-            <div class="chip" data-val="a bold colourful creative top" onclick="pickChip(this,'clothing-chips')">Creative casual</div>
-          </div>
-        </div>
 
 
 
@@ -671,7 +662,6 @@
 
   /* ─── MAIN GENERATE (single Gemini call, plain studio backdrop) ─── */
   async function generate() {
-    const clothing = getChipVal('clothing-chips');
     const model   = getChipVal('model-chips') || 'gemini-2.0-flash-preview-image-generation';
 
     if (!selfieBase64){ showError('Please upload a selfie first.'); return; }
@@ -691,7 +681,7 @@ Lighting: soft directional studio light, gentle fill opposite side
 Clean editorial studio headshot. Modern, confident, approachable. High-end professional portrait photography.
 
 [CONTENT]
-Transform this selfie into a crisp professional headshot. Preserve the subject's exact likeness, face, hair, skin tone, and features precisely — do NOT alter their appearance. Clothing: ${clothing}. Natural, confident posture. Subject must fill the majority of the frame — no large empty areas above the head or at the sides.
+Transform this selfie into a crisp professional headshot. Preserve the subject's exact likeness, face, hair, skin tone, and features precisely — do NOT alter their appearance. Keep the subject's existing clothing exactly as worn — do not replace or change it. Subtly smarten the overall appearance: remove creases, tidy the collar, ensure it looks well-fitted and polished. Natural, confident posture. Subject must fill the majority of the frame — no large empty areas above the head or at the sides.
 
 BACKGROUND: Clean, plain, neutral light grey studio backdrop — no gradients, no texture, no shadows, no colour cast. A simple professional studio background.
 
