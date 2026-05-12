@@ -299,6 +299,17 @@
 
 
 
+        <!-- Clothing -->
+        <div class="field-wrap">
+          <label class="field-label">Clothing style</label>
+          <div class="chip-group" id="clothing-chips">
+            <div class="chip active" data-val="smart-casual" onclick="pickChip(this,'clothing-chips')">Smart casual</div>
+            <div class="chip" data-val="formal" onclick="pickChip(this,'clothing-chips')">Business formal</div>
+            <div class="chip" data-val="creative" onclick="pickChip(this,'clothing-chips')">Creative casual</div>
+            <div class="chip" data-val="keep" onclick="pickChip(this,'clothing-chips')">Keep my outfit</div>
+          </div>
+        </div>
+
         <!-- Model selector -->
         <div class="field-wrap">
           <label class="field-label">Model <span style="font-weight:400;color:#aaa;font-size:0.78rem;">(try the next if one fails)</span></label>
@@ -662,6 +673,7 @@
 
   /* ─── MAIN GENERATE (single Gemini call, plain studio backdrop) ─── */
   async function generate() {
+    const clothingVal = getChipVal('clothing-chips') || 'smart-casual';
     const model   = getChipVal('model-chips') || 'gemini-2.0-flash-preview-image-generation';
 
     if (!selfieBase64){ showError('Please upload a selfie first.'); return; }
@@ -681,7 +693,14 @@ Lighting: soft directional studio light, gentle fill opposite side
 Clean editorial studio headshot. Modern, confident, approachable. High-end professional portrait photography.
 
 [CONTENT]
-Transform this selfie into a crisp professional headshot. Preserve the subject's exact likeness, face, hair, skin tone, and features precisely — do NOT alter their appearance. Keep the subject's existing clothing exactly as worn — do not replace or change it. Subtly smarten the overall appearance: remove creases, tidy the collar, ensure it looks well-fitted and polished. Natural, confident posture. Subject must fill the majority of the frame — no large empty areas above the head or at the sides.
+Transform this selfie into a crisp professional headshot. Preserve the subject's exact likeness, face, hair, skin tone, and features precisely — do NOT alter their appearance. ${clothingVal === 'keep'
+  ? 'Keep the subject\'s existing clothing exactly as worn — do not replace or change it. Subtly smarten the overall appearance: remove creases, tidy the collar, ensure it looks well-fitted and polished.'
+  : clothingVal === 'formal'
+    ? 'Dress the subject in a sharp black business suit with a crisp white shirt.'
+    : clothingVal === 'creative'
+      ? 'Dress the subject in a bold, colourful creative top that feels confident and expressive.'
+      : 'Dress the subject in smart casual attire — a navy blazer over a clean white or light shirt.'
+} Natural, confident posture. Subject must fill the majority of the frame — no large empty areas above the head or at the sides.
 
 BACKGROUND: Clean, plain, neutral light grey studio backdrop — no gradients, no texture, no shadows, no colour cast. A simple professional studio background.
 
