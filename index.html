@@ -756,19 +756,22 @@
             for (let x = x0; x < x1; x++)
               if (!isBg((y * w + x) * 4)) { botY = y; break bot; }
 
-          const subH   = botY - topY;
-          const padTop = Math.floor(subH * 0.07); // 7% breathing room above head
+          const subH    = botY - topY;
+          const padTop  = Math.floor(subH * 0.07); // 7% breathing room above head
           const cropTop = Math.max(0, topY - padTop);
-          const cropH   = Math.min(h - cropTop, botY - cropTop + Math.floor(subH * 0.07));
+          // Crop to head + shoulders only (~60% of subject height) for tighter zoom
+          const cropH   = Math.min(h - cropTop, Math.floor(subH * 0.60) + padTop);
           const cropW   = Math.floor(cropH * 3 / 4);
-          const cropX   = Math.max(0, Math.floor((w - cropW) / 2));
+          // Clamp cropX so crop never exceeds canvas width
+          const cropX   = Math.max(0, Math.min(Math.floor((w - cropW) / 2), w - cropW));
+          const safeCropW = Math.min(cropW, w - cropX);
 
           // Output at fixed 3:4 ratio to avoid squash when source is square
           const outW = w;
           const outH = Math.floor(w * 4 / 3);
           const out = document.createElement('canvas');
           out.width = outW; out.height = outH;
-          out.getContext('2d').drawImage(canvas, cropX, cropTop, cropW, cropH, 0, 0, outW, outH);
+          out.getContext('2d').drawImage(canvas, cropX, cropTop, safeCropW, cropH, 0, 0, outW, outH);
           resolve(out.toDataURL('image/jpeg', 0.93));
         } catch (e) {
           console.warn('cropToSubject failed:', e);
