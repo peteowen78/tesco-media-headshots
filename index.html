@@ -757,9 +757,9 @@
               if (!isBg((y * w + x) * 4)) { botY = y; break bot; }
 
           const subH   = botY - topY;
-          const padTop = Math.floor(subH * 0.04); // 4% breathing room above head
+          const padTop = Math.floor(subH * 0.07); // 7% breathing room above head
           const cropTop = Math.max(0, topY - padTop);
-          const cropH   = Math.min(h - cropTop, botY - cropTop + Math.floor(subH * 0.04));
+          const cropH   = Math.min(h - cropTop, botY - cropTop + Math.floor(subH * 0.07));
           const cropW   = Math.floor(cropH * 3 / 4);
           const cropX   = Math.max(0, Math.floor((w - cropW) / 2));
 
