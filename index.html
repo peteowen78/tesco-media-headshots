@@ -763,9 +763,12 @@
           const cropW   = Math.floor(cropH * 3 / 4);
           const cropX   = Math.max(0, Math.floor((w - cropW) / 2));
 
+          // Output at fixed 3:4 ratio to avoid squash when source is square
+          const outW = w;
+          const outH = Math.floor(w * 4 / 3);
           const out = document.createElement('canvas');
-          out.width = w; out.height = h;
-          out.getContext('2d').drawImage(canvas, cropX, cropTop, cropW, cropH, 0, 0, w, h);
+          out.width = outW; out.height = outH;
+          out.getContext('2d').drawImage(canvas, cropX, cropTop, cropW, cropH, 0, 0, outW, outH);
           resolve(out.toDataURL('image/jpeg', 0.93));
         } catch (e) {
           console.warn('cropToSubject failed:', e);
