@@ -300,8 +300,8 @@
         <div class="field-wrap">
           <label class="field-label">Model <span style="font-weight:400;color:#aaa;font-size:0.78rem;">(try the next if one fails)</span></label>
           <div class="chip-group" id="model-chips" style="grid-template-columns:1fr;">
-            <div class="chip active" data-val="gemini-2.0-flash-preview-image-generation" onclick="pickChip(this,'model-chips')">gemini-2.0-flash-preview-image-generation <span style="font-weight:400;color:#aaa;font-size:0.78rem;">— recommended</span></div>
-            <div class="chip" data-val="gemini-2.5-flash-image" onclick="pickChip(this,'model-chips')">gemini-2.5-flash-image <span style="font-weight:400;color:#aaa;font-size:0.78rem;">— alternative</span></div>
+            <div class="chip active" data-val="gemini-2.5-flash-image" onclick="pickChip(this,'model-chips')">gemini-2.5-flash-image <span style="font-weight:400;color:#aaa;font-size:0.78rem;">— recommended</span></div>
+            <div class="chip" data-val="gemini-2.0-flash-preview-image-generation" onclick="pickChip(this,'model-chips')">gemini-2.0-flash-preview-image-generation <span style="font-weight:400;color:#aaa;font-size:0.78rem;">— legacy fallback</span></div>
           </div>
         </div>
 
@@ -506,9 +506,6 @@
   }
 
   /* ─── COMPRESS: resize a base64 image to JPEG before API calls ─── */
-  /* ─── REPLACE BACKGROUND: sample actual corner colour, flood-fill outward with exact brand colour ─── */
-  /* (no canvas post-processing — portrait generated directly on brand colour) */
-
   function compressBase64Image(b64, mime, maxW, maxH, quality) {
     return new Promise(resolve => {
       const img = new Image();
@@ -529,8 +526,8 @@
   /* ─── SHARED: call Gemini image-gen with an image input ─── */
   // MODEL FALLBACK ORDER — tried in sequence if a model returns "not found/supported"
   const MODEL_FALLBACKS = [
-    'gemini-2.0-flash-preview-image-generation',
-    'gemini-2.5-flash-image'
+    'gemini-2.5-flash-image',
+    'gemini-2.0-flash-preview-image-generation'
   ];
 
   async function callGeminiModel(model, imgBase64, imgMime, prompt) {
@@ -582,8 +579,8 @@
 
   /* ─── SET LOADING STATE ─── */
   function setLoadingStep(n) {
-    const titles = ['', 'Generating your headshot…', ''];
-    const subs   = ['', 'Creating a studio portrait from your selfie. Usually takes 20–40 sec.', ''];
+    const titles = ['', 'Generating your headshot…', 'Placing on brand background…'];
+    const subs   = ['', 'Creating a studio portrait from your selfie. Usually takes 20–40 sec.', 'Cutting out the subject and placing on the exact Tesco tonal blue. First run downloads the cutout model — may take a little longer.'];
     document.getElementById('loading-title').innerHTML = titles[n];
     document.getElementById('loading-sub').textContent  = subs[n];
     document.getElementById('lp1').style.background = n >= 1 ? 'var(--blue)'  : '#ddd';
@@ -593,75 +590,55 @@
   }
 
 
-  /* ─── POST-PROCESS: nudge background pixels to exact brand hex ─── */
-  async function fixBackgroundColor(imgDataUrl, targetHex) {
-    return new Promise((resolve) => {
-      const img = new Image();
-      img.onload = function () {
-        try {
-          const canvas = document.createElement('canvas');
-          canvas.width  = img.naturalWidth  || img.width;
-          canvas.height = img.naturalHeight || img.height;
-          const ctx = canvas.getContext('2d');
-          ctx.drawImage(img, 0, 0);
+  /* ─── POST-PROCESS: AI cutout + composite onto exact brand colour ───
+     A dedicated matting model (@imgly/background-removal, runs entirely in the
+     browser) lifts the subject — including fine hair strands — with a soft alpha
+     edge. The cutout is then placed on a canvas flood-filled with the exact brand
+     hex, so the background is pixel-identical on every generation. */
+  let bgRemovalModule = null;
+  async function loadBgRemoval() {
+    if (!bgRemovalModule) {
+      bgRemovalModule = await import('https://cdn.jsdelivr.net/npm/@imgly/background-removal@1.5.5/+esm');
+    }
+    return bgRemovalModule;
+  }
 
-          const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
-          const px = imageData.data;
-          const w  = canvas.width, h = canvas.height;
+  async function cutoutAndComposite(imgDataUrl, targetHex) {
+    try {
+      const { removeBackground } = await loadBgRemoval();
+      const srcBlob = await (await fetch(imgDataUrl)).blob();
+      const fgBlob  = await removeBackground(srcBlob, { output: { format: 'image/png' } });
 
-          // Sample 6×6 patches at all four corners → estimate generated BG colour
-          function samplePatch(x, y, sz) {
-            let r = 0, g = 0, b = 0, n = 0;
-            for (let dy = 0; dy < sz; dy++) {
-              for (let dx = 0; dx < sz; dx++) {
-                const i = ((y + dy) * w + (x + dx)) * 4;
-                if (i >= 0 && i + 2 < px.length) { r += px[i]; g += px[i+1]; b += px[i+2]; n++; }
-              }
-            }
-            return n ? [r/n, g/n, b/n] : [128, 128, 128];
-          }
-          const pts = [samplePatch(0,0,6), samplePatch(w-6,0,6), samplePatch(0,h-6,6), samplePatch(w-6,h-6,6)];
-          const bgR = pts.reduce((s,c)=>s+c[0],0) / 4;
-          const bgG = pts.reduce((s,c)=>s+c[1],0) / 4;
-          const bgB = pts.reduce((s,c)=>s+c[2],0) / 4;
+      const fgUrl = URL.createObjectURL(fgBlob);
+      const img   = await new Promise((resolve, reject) => {
+        const i = new Image();
+        i.onload  = () => resolve(i);
+        i.onerror = reject;
+        i.src = fgUrl;
+      });
 
-          // Target hex → RGB
-          const tr = parseInt(targetHex.slice(1,3), 16);
-          const tg = parseInt(targetHex.slice(3,5), 16);
-          const tb = parseInt(targetHex.slice(5,7), 16);
+      const canvas  = document.createElement('canvas');
+      canvas.width  = img.naturalWidth;
+      canvas.height = img.naturalHeight;
+      const ctx = canvas.getContext('2d');
+      ctx.fillStyle = targetHex;
+      ctx.fillRect(0, 0, canvas.width, canvas.height);
+      ctx.drawImage(img, 0, 0);
+      URL.revokeObjectURL(fgUrl);
 
-          // Shift every pixel that is "close enough" to the sampled BG colour
-          const threshold = 65;
-          for (let i = 0; i < px.length; i += 4) {
-            const dr = px[i]   - bgR;
-            const dg = px[i+1] - bgG;
-            const db = px[i+2] - bgB;
-            const dist = Math.sqrt(dr*dr + dg*dg + db*db);
-            if (dist < threshold) {
-              const t = 1 - dist / threshold; // blend: 1.0 at centre, 0 at edge
-              px[i]   = Math.round(px[i]   + t * (tr - bgR));
-              px[i+1] = Math.round(px[i+1] + t * (tg - bgG));
-              px[i+2] = Math.round(px[i+2] + t * (tb - bgB));
-            }
-          }
-
-          ctx.putImageData(imageData, 0, 0);
-          resolve(canvas.toDataURL('image/jpeg', 0.93));
-        } catch (e) {
-          console.warn('fixBackgroundColor failed, using original:', e);
-          resolve(imgDataUrl);
-        }
-      };
-      img.onerror = () => resolve(imgDataUrl);
-      img.src = imgDataUrl;
-    });
+      // PNG keeps the flat brand colour exact — no JPEG ringing around edges
+      return canvas.toDataURL('image/png');
+    } catch (e) {
+      console.warn('Cutout failed, using original image:', e);
+      return imgDataUrl;
+    }
   }
 
 
 /* ─── MAIN GENERATE (single Gemini call, plain studio backdrop) ─── */
   async function generate() {
     const clothingVal = getChipVal('clothing-chips') || 'smart-casual';
-    const model   = getChipVal('model-chips') || 'gemini-2.0-flash-preview-image-generation';
+    const model   = getChipVal('model-chips') || 'gemini-2.5-flash-image';
 
     if (!selfieBase64){ showError('Please upload a selfie first.'); return; }
 
@@ -699,6 +676,11 @@ No heavy retouching. No lens distortion. No oversaturation. Do not change the pe
 
       const result = await callGemini(model, selfieBase64, selfieMimeType || 'image/jpeg', prompt);
       resultDataUrl = `data:${result.mime};base64,${result.base64}`;
+
+      // Stage 2: AI cutout of the subject, placed on the exact brand colour.
+      // Falls back to the raw portrait if the cutout fails.
+      setLoadingStep(2);
+      resultDataUrl = await cutoutAndComposite(resultDataUrl, '#E4F3FF');
     } catch (err) {
       console.error('Generation error:', err);
       showStep(2);
