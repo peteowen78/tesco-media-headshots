@@ -296,6 +296,15 @@
           </div>
         </div>
 
+        <!-- Background colour -->
+        <div class="field-wrap">
+          <label class="field-label">Background colour</label>
+          <div class="chip-group" id="bg-chips">
+            <div class="chip active" data-val="blue" onclick="pickChip(this,'bg-chips')"><span style="display:inline-block;width:14px;height:14px;border-radius:50%;background:#E4F3FF;border:1px solid #c5d8e8;vertical-align:-2px;margin-right:8px;"></span>Tesco tonal blue</div>
+            <div class="chip" data-val="lilac" onclick="pickChip(this,'bg-chips')"><span style="display:inline-block;width:14px;height:14px;border-radius:50%;background:#FFD4F7;border:1px solid #e3b8dc;vertical-align:-2px;margin-right:8px;"></span>Lilac</div>
+          </div>
+        </div>
+
         <!-- Model selector -->
         <div class="field-wrap">
           <label class="field-label">Model <span style="font-weight:400;color:#aaa;font-size:0.78rem;">(try the next if one fails)</span></label>
@@ -580,7 +589,7 @@
   /* ─── SET LOADING STATE ─── */
   function setLoadingStep(n) {
     const titles = ['', 'Generating your headshot…', 'Placing on brand background…'];
-    const subs   = ['', 'Creating a studio portrait from your selfie. Usually takes 20–40 sec.', 'Cutting out the subject and placing on the exact Tesco tonal blue. First run downloads the cutout model — may take a little longer.'];
+    const subs   = ['', 'Creating a studio portrait from your selfie. Usually takes 20–40 sec.', 'Cutting out the subject and placing on your chosen brand colour. First run downloads the cutout model — may take a little longer.'];
     document.getElementById('loading-title').innerHTML = titles[n];
     document.getElementById('loading-sub').textContent  = subs[n];
     document.getElementById('lp1').style.background = n >= 1 ? 'var(--blue)'  : '#ddd';
@@ -654,10 +663,20 @@
   }
 
 
+/* ─── BACKGROUND OPTIONS — brand-approved colours ───
+     hex is what the cutout is composited onto (guaranteed exact);
+     prompt tells Gemini to generate on a similar colour so any soft
+     edge pixels blend toward the right hue. */
+  const BG_OPTIONS = {
+    blue:  { hex: '#E4F3FF', prompt: 'very pale icy sky blue — approximately hex #E4F3FF' },
+    lilac: { hex: '#FFD4F7', prompt: 'soft pale lilac pink — approximately hex #FFD4F7' }
+  };
+
 /* ─── MAIN GENERATE (single Gemini call, plain studio backdrop) ─── */
   async function generate() {
     const clothingVal = getChipVal('clothing-chips') || 'smart-casual';
     const model   = getChipVal('model-chips') || 'gemini-2.5-flash-image';
+    const bg      = BG_OPTIONS[getChipVal('bg-chips')] || BG_OPTIONS.blue;
 
     if (!selfieBase64){ showError('Please upload a selfie first.'); return; }
 
@@ -688,7 +707,7 @@ Transform this selfie into a crisp professional headshot. The face is SACRED —
 } Natural, confident posture, slight forward lean.
 
 [BACKGROUND]
-Fill the entire background with a single flat, solid, uniform very pale icy sky blue — approximately hex #E4F3FF. No gradients, no texture, no shadows, no vignette.
+Fill the entire background with a single flat, solid, uniform ${bg.prompt}. No gradients, no texture, no shadows, no vignette.
 
 [REFINEMENT]
 No heavy retouching. No lens distortion. No oversaturation. Do not change the person's identity.`;
@@ -700,7 +719,7 @@ No heavy retouching. No lens distortion. No oversaturation. Do not change the pe
       // Stage 2: AI cutout of the subject, placed on the exact brand colour.
       // Falls back to the raw portrait if the cutout fails.
       setLoadingStep(2);
-      resultDataUrl = await cutoutAndComposite(resultDataUrl, '#E4F3FF');
+      resultDataUrl = await cutoutAndComposite(resultDataUrl, bg.hex);
     } catch (err) {
       console.error('Generation error:', err);
       showStep(2);
