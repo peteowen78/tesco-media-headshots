@@ -617,13 +617,32 @@
         i.src = fgUrl;
       });
 
+      // Harden semi-transparent regions before compositing. Where the matting
+      // model is unsure (soft shadows, out-of-focus shoulders) it outputs
+      // partial transparency, which blends the subject with the background and
+      // shows as grey mist. Remap alpha: faint remnants → fully transparent,
+      // mostly-opaque → fully solid, with a transition band kept for hair.
+      const fgCanvas  = document.createElement('canvas');
+      fgCanvas.width  = img.naturalWidth;
+      fgCanvas.height = img.naturalHeight;
+      const fgCtx = fgCanvas.getContext('2d');
+      fgCtx.drawImage(img, 0, 0);
+      const fgData = fgCtx.getImageData(0, 0, fgCanvas.width, fgCanvas.height);
+      const fpx = fgData.data;
+      const LO = 0.25, HI = 0.60;
+      for (let i = 3; i < fpx.length; i += 4) {
+        const a = fpx[i] / 255;
+        fpx[i] = a <= LO ? 0 : a >= HI ? 255 : Math.round(((a - LO) / (HI - LO)) * 255);
+      }
+      fgCtx.putImageData(fgData, 0, 0);
+
       const canvas  = document.createElement('canvas');
       canvas.width  = img.naturalWidth;
       canvas.height = img.naturalHeight;
       const ctx = canvas.getContext('2d');
       ctx.fillStyle = targetHex;
       ctx.fillRect(0, 0, canvas.width, canvas.height);
-      ctx.drawImage(img, 0, 0);
+      ctx.drawImage(fgCanvas, 0, 0);
       URL.revokeObjectURL(fgUrl);
 
       // PNG keeps the flat brand colour exact — no JPEG ringing around edges
@@ -657,7 +676,7 @@
 - Zero empty space above the head — crop in tight
 
 [CAMERA & LIGHTING]
-High-end full-frame digital camera, 85mm portrait prime lens. Soft directional studio light, gentle fill on opposite side. Sharp focus on eyes.
+High-end full-frame digital camera, 85mm portrait prime lens. Soft directional studio light, gentle fill on opposite side. Deep depth of field — the ENTIRE subject must be in crisp sharp focus, including both shoulders and all clothing. No blur, haze, mist, smoke, fog, vignette or soft shadow effects anywhere in the image.
 
 [STYLE]
 Clean editorial studio headshot. Modern, confident, approachable. High-end professional portrait photography.
@@ -676,6 +695,7 @@ No heavy retouching. No lens distortion. No oversaturation. Do not change the pe
 
       const result = await callGemini(model, selfieBase64, selfieMimeType || 'image/jpeg', prompt);
       resultDataUrl = `data:${result.mime};base64,${result.base64}`;
+      window._rawGen = resultDataUrl; // debug: raw portrait before cutout, inspectable from the console
 
       // Stage 2: AI cutout of the subject, placed on the exact brand colour.
       // Falls back to the raw portrait if the cutout fails.
