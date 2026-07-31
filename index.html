@@ -291,8 +291,8 @@
         <div class="field-wrap">
           <label class="field-label">Clothing style</label>
           <div class="chip-group" id="clothing-chips">
-            <div class="chip active" data-val="smart-casual" onclick="pickChip(this,'clothing-chips')">Generate outfit</div>
-            <div class="chip" data-val="keep" onclick="pickChip(this,'clothing-chips')">Keep my outfit</div>
+            <div class="chip active" data-val="smart-casual" onclick="pickChip(this,'clothing-chips')">Smarten my outfit</div>
+            <div class="chip" data-val="keep" onclick="pickChip(this,'clothing-chips')">Keep my outfit as-is</div>
           </div>
         </div>
 
@@ -703,7 +703,7 @@ Clean editorial studio headshot. Modern, confident, approachable. High-end profe
 [SUBJECT]
 Transform this selfie into a crisp professional headshot. The face is SACRED — reproduce it with absolute pixel-perfect fidelity. Do NOT smooth skin, slim the face, alter jaw shape, resize eyes, change nose shape, whiten teeth, or modify any facial feature in any way whatsoever. The face in the output must be identical to the face in the input. Same wrinkles, same pores, same asymmetries, same glasses, same expression. Hair and skin tone must also be exactly preserved. ${clothingVal === 'keep'
   ? 'Keep the subject\'s existing clothing exactly as worn — do not replace or change it. Subtly smarten: remove creases, tidy the collar, ensure it looks well-fitted and polished.'
-  : 'Dress the subject in relaxed smart-casual attire — a clean open-collar shirt, a fine-knit crew-neck jumper, or a smart plain t-shirt under an open overshirt, in plain muted tones (navy, grey, stone, soft earth colours). Strictly NO blazer, NO suit jacket, NO tie — the look is modern creative-studio, approachable and unstuffy, not corporate.'
+  : 'Base the clothing on what the subject is actually wearing in the selfie — same garment types, same colours, recognisably their own look. Present it at its best: freshly laundered and pressed, no creases or stains, collar and seams sitting neatly, well-fitted. Only if a garment is clearly unsuitable for a professional headshot (heavily worn, stained, or gym wear), replace it with the nearest smarter equivalent in the same style and colour — a tired t-shirt becomes a clean well-fitted plain t-shirt, a hoodie becomes a smart knit. Do NOT add a blazer, suit jacket or tie unless the subject is already wearing one, and do not change the overall style of their outfit.'
 } Natural, confident posture, slight forward lean.
 
 [BACKGROUND]
