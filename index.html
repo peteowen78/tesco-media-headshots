@@ -720,12 +720,15 @@
 
 
 /* ─── BACKGROUND OPTIONS — brand-approved colours ───
-     hex is what the cutout is composited onto (guaranteed exact);
-     prompt tells Gemini to generate on a similar colour so any soft
-     edge pixels blend toward the right hue. */
+     hex is what the cutout is composited onto (guaranteed exact).
+     Generation ALWAYS happens on pale icy blue regardless of choice:
+     matting the cutout needs contrast between subject and backdrop, and
+     generating on the chosen colour broke that (a red top on the lilac
+     backdrop lost its shoulders). Both brand colours are near-white
+     pastels, so edge pixels blend fine either way. */
   const BG_OPTIONS = {
-    blue:  { hex: '#E4F3FF', prompt: 'very pale icy sky blue — approximately hex #E4F3FF' },
-    lilac: { hex: '#FFD4F7', prompt: 'soft pale lilac pink — approximately hex #FFD4F7' }
+    blue:  { hex: '#E4F3FF' },
+    lilac: { hex: '#FFD4F7' }
   };
 
 /* ─── MAIN GENERATE (single Gemini call, plain studio backdrop) ─── */
@@ -763,7 +766,7 @@ Transform this selfie into a crisp professional headshot. The face is SACRED —
 } Natural, confident posture, slight forward lean.
 
 [BACKGROUND]
-Fill the entire background with a single flat, solid, uniform ${bg.prompt}. No gradients, no texture, no shadows, no vignette.
+Fill the entire background with a single flat, solid, uniform very pale icy sky blue — approximately hex #E4F3FF. No gradients, no texture, no shadows, no vignette.
 
 [REFINEMENT]
 No heavy retouching. No lens distortion. No oversaturation. Do not change the person's identity.`;
