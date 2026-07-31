@@ -682,6 +682,43 @@
         i.src = fgUrl;
       });
 
+      // The generation backdrop is always pale blue (we control it), so any
+      // pixel whose colour is clearly NOT the backdrop is provably subject.
+      // Sample the actual backdrop from the raw image's corners, then rescue
+      // every colour-distant pixel at full opacity — the matting model can
+      // never delete solid clothing or skin again (it once ate a whole
+      // shoulder). Matting still decides the soft hair edges.
+      const rawImg = await new Promise((resolve, reject) => {
+        const i = new Image();
+        i.onload  = () => resolve(i);
+        i.onerror = reject;
+        i.src = imgDataUrl;
+      });
+      const rawCanvas  = document.createElement('canvas');
+      rawCanvas.width  = img.naturalWidth;
+      rawCanvas.height = img.naturalHeight;
+      const rawCtx = rawCanvas.getContext('2d');
+      rawCtx.drawImage(rawImg, 0, 0, rawCanvas.width, rawCanvas.height);
+      const rpx = rawCtx.getImageData(0, 0, rawCanvas.width, rawCanvas.height).data;
+
+      const W = img.naturalWidth, H = img.naturalHeight;
+      // Backdrop samples from spots that are reliably background in a
+      // headshot: top corners and upper side edges. NEVER bottom corners —
+      // shoulders live there. A pixel is subject if far from ALL samples
+      // (min-distance also tolerates gentle backdrop gradients).
+      function patchAvg(x0, y0) {
+        let r = 0, g = 0, b = 0, n = 0;
+        for (let dy = 0; dy < 6; dy++) for (let dx = 0; dx < 6; dx++) {
+          const j = ((y0 + dy) * W + (x0 + dx)) * 4;
+          r += rpx[j]; g += rpx[j+1]; b += rpx[j+2]; n++;
+        }
+        return [r/n, g/n, b/n];
+      }
+      const bgSamples = [
+        patchAvg(0, 0), patchAvg(W - 6, 0),
+        patchAvg(0, Math.floor(H * 0.12)), patchAvg(W - 6, Math.floor(H * 0.12))
+      ];
+
       // Harden semi-transparent regions before compositing. Where the matting
       // model is unsure (soft shadows, out-of-focus shoulders) it outputs
       // partial transparency, which blends the subject with the background and
@@ -694,10 +731,21 @@
       fgCtx.drawImage(img, 0, 0);
       const fgData = fgCtx.getImageData(0, 0, fgCanvas.width, fgCanvas.height);
       const fpx = fgData.data;
-      const LO = 0.25, HI = 0.60;
-      for (let i = 3; i < fpx.length; i += 4) {
-        const a = fpx[i] / 255;
-        fpx[i] = a <= LO ? 0 : a >= HI ? 255 : Math.round(((a - LO) / (HI - LO)) * 255);
+      const LO = 0.25, HI = 0.60, RESCUE_DIST = 60;
+      for (let i = 0; i < fpx.length; i += 4) {
+        let minDist = Infinity;
+        for (const s of bgSamples) {
+          const dr = rpx[i] - s[0], dg = rpx[i+1] - s[1], db = rpx[i+2] - s[2];
+          const d = Math.sqrt(dr*dr + dg*dg + db*db);
+          if (d < minDist) minDist = d;
+        }
+        if (minDist > RESCUE_DIST) {
+          // Clearly not backdrop colour → definitely subject: restore from raw
+          fpx[i] = rpx[i]; fpx[i+1] = rpx[i+1]; fpx[i+2] = rpx[i+2]; fpx[i+3] = 255;
+        } else {
+          const a = fpx[i+3] / 255;
+          fpx[i+3] = a <= LO ? 0 : a >= HI ? 255 : Math.round(((a - LO) / (HI - LO)) * 255);
+        }
       }
       fgCtx.putImageData(fgData, 0, 0);
 
