@@ -1,0 +1,6 @@
+.DS_Store
+exported/
+.claude/
+node_modules/
+.vercel/
+.env*

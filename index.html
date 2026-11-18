@@ -87,10 +87,12 @@
     .chip {
       border: 2px solid #e5e7eb; border-radius: 10px; padding: 11px 14px;
       cursor: pointer; font-weight: 600; font-size: 0.85rem; color: #333;
+      background: #fff; font-family: 'Outfit', sans-serif; text-align: left;
       transition: border-color 0.15s, background 0.15s, color 0.15s;
     }
     .chip:hover  { border-color: var(--blue); background: var(--tonal); }
     .chip.active { border-color: var(--blue); background: var(--blue); color: #fff; }
+    .chip:focus-visible, .btn:focus-visible { outline: 3px solid var(--pink); outline-offset: 2px; }
 
     /* ── INPUTS ── */
     .tm-input {
@@ -169,7 +171,25 @@
 
     /* ── GRID ── */
     .two-col { display: grid; grid-template-columns: 1fr 1fr; gap: 56px; align-items: start; }
-    @media (max-width: 680px) { .two-col { grid-template-columns: 1fr; gap: 36px; } }
+    @media (max-width: 680px) {
+      .two-col { grid-template-columns: 1fr; gap: 36px; }
+      header { padding: 12px 16px; }
+      header svg { height: 38px; }
+      .container { padding: 0 20px; }
+      .hero { padding: 36px 0 28px; }
+      .steps { margin-bottom: 32px; }
+      footer { padding: 24px 20px; flex-direction: column; gap: 10px; align-items: flex-start; margin-top: 64px; }
+    }
+
+    /* ── WARNING BOX (shown when the brand background could not be applied) ── */
+    .warn-box {
+      display: none; background: #FFF4E5; border-left: 4px solid #E08A00;
+      border-radius: 10px; padding: 14px 16px; margin-top: 16px; max-width: 340px;
+    }
+    .warn-box p { font-size: 0.82rem; color: #5a3b00; line-height: 1.5; }
+
+    /* ── PRIVACY NOTE ── */
+    .privacy-note { font-size: 0.75rem; color: #888; line-height: 1.5; margin-top: 18px; max-width: 300px; }
 
     /* ── FIELD LABEL ── */
     .field-label { display: block; font-weight: 700; font-size: 0.87rem; color: #111; margin-bottom: 8px; }
@@ -257,6 +277,8 @@
             <span style="font-size:0.83rem;color:#888;cursor:pointer;text-decoration:underline;">Change photo</span>
           </label>
         </div>
+
+        <p class="privacy-note">Your photo is sent to Google's Gemini AI service to create the headshot. It is not stored by this tool — nothing is kept once you close the page.</p>
       </div>
 
       <!-- Tips -->
@@ -284,7 +306,7 @@
       <!-- Config form -->
       <div>
         <h2 style="font-weight:800;font-size:1.4rem;margin-bottom:8px;">Configure your headshot</h2>
-        <p style="color:#555;font-size:0.92rem;margin-bottom:28px;line-height:1.5;">Choose your look and enter your API key to generate.</p>
+        <p style="color:#555;font-size:0.92rem;margin-bottom:28px;line-height:1.5;">Choose your look, then generate.</p>
 
 
 
@@ -292,27 +314,18 @@
         <!-- Clothing -->
         <div class="field-wrap">
           <label class="field-label">Clothing style</label>
-          <div class="chip-group" id="clothing-chips">
-            <div class="chip active" data-val="smart-casual" onclick="pickChip(this,'clothing-chips')">Smarten my outfit</div>
-            <div class="chip" data-val="keep" onclick="pickChip(this,'clothing-chips')">Keep my outfit as-is</div>
+          <div class="chip-group" id="clothing-chips" role="group" aria-label="Clothing style">
+            <button type="button" class="chip active" data-val="smart-casual" aria-pressed="true" onclick="pickChip(this,'clothing-chips')">Smarten my outfit</button>
+            <button type="button" class="chip" data-val="keep" aria-pressed="false" onclick="pickChip(this,'clothing-chips')">Keep my outfit as-is</button>
           </div>
         </div>
 
         <!-- Background colour -->
         <div class="field-wrap">
           <label class="field-label">Background colour</label>
-          <div class="chip-group" id="bg-chips">
-            <div class="chip active" data-val="blue" onclick="pickChip(this,'bg-chips')"><span style="display:inline-block;width:14px;height:14px;border-radius:50%;background:#E4F3FF;border:1px solid #c5d8e8;vertical-align:-2px;margin-right:8px;"></span>Tesco tonal blue</div>
-            <div class="chip" data-val="lilac" onclick="pickChip(this,'bg-chips')"><span style="display:inline-block;width:14px;height:14px;border-radius:50%;background:#FFD4F7;border:1px solid #e3b8dc;vertical-align:-2px;margin-right:8px;"></span>Lilac</div>
-          </div>
-        </div>
-
-        <!-- Model selector -->
-        <div class="field-wrap">
-          <label class="field-label">Model <span style="font-weight:400;color:#aaa;font-size:0.78rem;">(try the next if one fails)</span></label>
-          <div class="chip-group" id="model-chips" style="grid-template-columns:1fr;">
-            <div class="chip active" data-val="gemini-2.5-flash-image" onclick="pickChip(this,'model-chips')">gemini-2.5-flash-image <span style="font-weight:400;color:#aaa;font-size:0.78rem;">— recommended</span></div>
-            <div class="chip" data-val="gemini-2.0-flash-preview-image-generation" onclick="pickChip(this,'model-chips')">gemini-2.0-flash-preview-image-generation <span style="font-weight:400;color:#aaa;font-size:0.78rem;">— legacy fallback</span></div>
+          <div class="chip-group" id="bg-chips" role="group" aria-label="Background colour">
+            <button type="button" class="chip active" data-val="blue" aria-pressed="true" onclick="pickChip(this,'bg-chips')"><span style="display:inline-block;width:14px;height:14px;border-radius:50%;background:#E4F3FF;border:1px solid #c5d8e8;vertical-align:-2px;margin-right:8px;"></span>Tesco tonal blue</button>
+            <button type="button" class="chip" data-val="lilac" aria-pressed="false" onclick="pickChip(this,'bg-chips')"><span style="display:inline-block;width:14px;height:14px;border-radius:50%;background:#FFD4F7;border:1px solid #e3b8dc;vertical-align:-2px;margin-right:8px;"></span>Lilac</button>
           </div>
         </div>
 
@@ -321,7 +334,7 @@
           <button class="btn btn-ghost" onclick="goToStep1()">← Back</button>
         </div>
 
-        <p class="error-msg" id="error-msg"></p>
+        <p class="error-msg" id="error-msg" role="alert"></p>
       </div>
 
       <!-- Selfie preview -->
@@ -342,7 +355,7 @@
       <div class="spinner"></div>
       <div>
         <h2 class="pulse" style="font-weight:900;font-size:1.8rem;color:var(--blue);margin-bottom:10px;" id="loading-title">Generating your headshot…</h2>
-        <p style="color:#888;font-size:0.92rem;" id="loading-sub">This usually takes 30–60 seconds across two steps. Please keep this window open.</p>
+        <p style="color:#888;font-size:0.92rem;" id="loading-sub">This usually takes under a minute across two steps. Please keep this window open.</p>
       </div>
       <!-- Two-step progress track -->
       <div style="display:flex;align-items:center;gap:0;background:var(--grey);border-radius:9999px;padding:6px 8px;gap:4px;">
@@ -371,6 +384,8 @@
           <button class="btn btn-pink" onclick="regenerate()" style="width:100%;">↺ Regenerate</button>
           <button class="btn btn-ghost" onclick="startOver()" style="width:100%;">Start over</button>
         </div>
+
+        <div class="warn-box" id="result-warning" role="status"><p id="result-warning-text"></p></div>
 
         <div class="info-box" style="margin-top:28px;max-width:340px;">
           <p>If the likeness isn't quite right, try regenerating. Results may vary — keep generating until you get one that fits the Tesco Media style.</p>
@@ -486,9 +501,10 @@
   });
 
   // Shared by file upload and camera capture
-  function applySelfie(rawDataUrl, mime) {
-    selfieMimeType = mime || 'image/jpeg';
+  function applySelfie(rawDataUrl) {
+    selfieMimeType = 'image/jpeg'; // resizeImage always re-encodes as JPEG
     resizeImage(rawDataUrl, 1200, 1600).then(resized => {
+      if (!resized) { alert('Sorry, that photo could not be read. Please try a JPG or PNG.'); return; }
       selfieDataUrl = resized;
       selfieBase64  = resized.split(',')[1];
       // Preview in upload zone
@@ -503,7 +519,7 @@
     if (!file.type.startsWith('image/')) { alert('Please upload an image file (JPG, PNG, or WEBP).'); return; }
     if (file.size > 10 * 1024 * 1024)   { alert('Please use an image under 10 MB.'); return; }
     const reader = new FileReader();
-    reader.onload = e => applySelfie(e.target.result, file.type);
+    reader.onload = e => applySelfie(e.target.result);
     reader.readAsDataURL(file);
   }
 
@@ -542,7 +558,7 @@
     c.height = v.videoHeight;
     c.getContext('2d').drawImage(v, 0, 0);
     closeCamera();
-    applySelfie(c.toDataURL('image/jpeg', 0.92), 'image/jpeg');
+    applySelfie(c.toDataURL('image/jpeg', 0.92));
   }
 
   function resizeImage(dataUrl, maxW, maxH) {
@@ -557,95 +573,62 @@
         c.getContext('2d').drawImage(img, 0, 0, w, h);
         resolve(c.toDataURL('image/jpeg', 0.88));
       };
+      img.onerror = () => resolve(null); // e.g. a HEIC photo this browser cannot open
       img.src = dataUrl;
     });
   }
 
   /* ─── CHIPS ─── */
   function pickChip(el, groupId) {
-    document.querySelectorAll('#'+groupId+' .chip').forEach(c => c.classList.remove('active'));
-    el.classList.add('active');
+    document.querySelectorAll('#'+groupId+' .chip').forEach(c => {
+      c.classList.remove('active'); c.setAttribute('aria-pressed', 'false');
+    });
+    el.classList.add('active'); el.setAttribute('aria-pressed', 'true');
   }
   function getChipVal(groupId) {
     return document.querySelector('#'+groupId+' .chip.active')?.dataset.val || '';
   }
 
-  /* ─── COMPRESS: resize a base64 image to JPEG before API calls ─── */
-  function compressBase64Image(b64, mime, maxW, maxH, quality) {
-    return new Promise(resolve => {
-      const img = new Image();
-      img.onload = () => {
-        let w = img.width, h = img.height;
-        if (w > maxW) { h = Math.round(h * maxW / w); w = maxW; }
-        if (h > maxH) { w = Math.round(w * maxH / h); h = maxH; }
-        const c = document.createElement('canvas');
-        c.width = w; c.height = h;
-        c.getContext('2d').drawImage(img, 0, 0, w, h);
-        resolve({ base64: c.toDataURL('image/jpeg', quality || 0.85).split(',')[1], mime: 'image/jpeg' });
-      };
-      img.onerror = () => resolve({ base64: b64, mime }); // fallback: return original
-      img.src = `data:${mime};base64,${b64}`;
-    });
-  }
+  /* ─── SERVER CALL ───
+     The page sends only the selfie and the clothing choice. The prompt and the
+     model live on the server (api/gemini.js). If the server has a passcode
+     switched on, the page asks for it once and remembers it in this browser. */
+  const PASSCODE_KEY = 'tmh_passcode';
+  function getPasscode()  { try { return localStorage.getItem(PASSCODE_KEY) || ''; } catch (e) { return ''; } }
+  function setPasscode(v) { try { v ? localStorage.setItem(PASSCODE_KEY, v) : localStorage.removeItem(PASSCODE_KEY); } catch (e) {} }
 
-  /* ─── SHARED: call Gemini image-gen with an image input ─── */
-  // MODEL FALLBACK ORDER — tried in sequence if a model returns "not found/supported"
-  const MODEL_FALLBACKS = [
-    'gemini-2.5-flash-image',
-    'gemini-2.0-flash-preview-image-generation'
-  ];
+  async function callGemini(imgBase64, imgMime, clothing) {
+    for (let attempt = 0; attempt < 2; attempt++) {
+      const headers  = { 'Content-Type': 'application/json' };
+      const passcode = getPasscode();
+      if (passcode) headers['x-app-passcode'] = passcode;
 
-  async function callGeminiModel(model, imgBase64, imgMime, prompt) {
-    const res = await fetch('/api/gemini', {
-      method:  'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ model, imgBase64, imgMime, prompt })
-    });
-
-    if (!res.ok) {
-      const err = await res.json().catch(() => ({}));
-      const msg = err?.error?.message || `API error ${res.status}`;
-      if (msg.toLowerCase().includes('not found') || msg.toLowerCase().includes('not support') ||
-          msg.toLowerCase().includes('invalid') || res.status === 404) {
-        const e = new Error(msg); e.modelNotFound = true; throw e;
-      }
-      throw new Error(msg);
-    }
-
-    const data  = await res.json();
-    const parts = data?.candidates?.[0]?.content?.parts || [];
-    const imgPt = parts.find(p => p.inlineData?.data);
-    if (!imgPt) {
-      // Check if blocked
-      const finishReason = data?.candidates?.[0]?.finishReason;
-      if (finishReason === 'SAFETY' || finishReason === 'RECITATION') {
-        throw new Error('The request was blocked by safety filters. Please try a different photo or adjust your settings.');
-      }
-      throw new Error('No image returned from model. It may have filtered the request — please try again.');
-    }
-
-    return { base64: imgPt.inlineData.data, mime: imgPt.inlineData.mimeType || 'image/png' };
-  }
-
-  async function callGemini(preferredModel, imgBase64, imgMime, prompt) {
-    const order = [preferredModel, ...MODEL_FALLBACKS.filter(m => m !== preferredModel)];
-    let lastErr;
-    for (const model of order) {
+      let res;
       try {
-        return await callGeminiModel(model, imgBase64, imgMime, prompt);
+        res = await fetch('/api/gemini', { method: 'POST', headers, body: JSON.stringify({ imgBase64, imgMime, clothing }) });
       } catch (e) {
-        lastErr = e;
-        if (!e.modelNotFound) throw e; // non-model error — stop immediately
-        console.warn(`Model "${model}" unavailable, trying next fallback…`);
+        throw new Error('Could not reach the server. Check your connection and try again.');
       }
+      const data = await res.json().catch(() => ({}));
+      if (res.ok && data?.image?.base64) return data.image;
+
+      if (res.status === 401 && data.code === 'PASSCODE_REQUIRED') {
+        setPasscode('');
+        if (attempt === 0) {
+          const entered = window.prompt('Enter the team passcode to use the headshot generator:');
+          if (entered && entered.trim()) { setPasscode(entered.trim()); continue; }
+          throw new Error('A passcode is needed to generate headshots.');
+        }
+        throw new Error('That passcode was not recognised. Please try again.');
+      }
+      throw new Error(typeof data.error === 'string' ? data.error : `Server error ${res.status}. Please try again.`);
     }
-    throw new Error(`None of the available models could be reached. Last error: ${lastErr?.message}`);
   }
 
   /* ─── SET LOADING STATE ─── */
   function setLoadingStep(n) {
     const titles = ['', 'Generating your headshot…', 'Placing on brand background…'];
-    const subs   = ['', 'Creating a studio portrait from your selfie. Usually takes 20–40 sec.', 'Cutting out the subject and placing on your chosen brand colour. First run downloads the cutout model — may take a little longer.'];
+    const subs   = ['', 'Creating a studio portrait from your selfie. Usually takes 20–40 sec.', 'Cutting out the subject and placing on your chosen brand colour. The first run downloads the cutout tools, so it may take a little longer.'];
     document.getElementById('loading-title').innerHTML = titles[n];
     document.getElementById('loading-sub').textContent  = subs[n];
     document.getElementById('lp1').style.background = n >= 1 ? 'var(--blue)'  : '#ddd';
@@ -660,14 +643,99 @@
      browser) lifts the subject — including fine hair strands — with a soft alpha
      edge. The cutout is then placed on a canvas flood-filled with the exact brand
      hex, so the background is pixel-identical on every generation. */
-  let bgRemovalModule = null;
-  async function loadBgRemoval() {
-    if (!bgRemovalModule) {
-      bgRemovalModule = await import('https://cdn.jsdelivr.net/npm/@imgly/background-removal@1.5.5/+esm');
+  let bgRemovalPromise = null;
+  function loadBgRemoval() {
+    if (!bgRemovalPromise) {
+      bgRemovalPromise = import('https://cdn.jsdelivr.net/npm/@imgly/background-removal@1.5.5/+esm')
+        .catch(e => { bgRemovalPromise = null; throw e; }); // allow a retry next time
     }
-    return bgRemovalModule;
+    return bgRemovalPromise;
   }
 
+  /* ─── CONSISTENT FRAMING ───
+     Every headshot is cropped so the eyes sit at the same height and the face
+     is the same size, whatever framing the image model happened to produce.
+     A small face detector (MediaPipe, runs in the browser) finds the eyes; the
+     cutout outline gives the top of the hair. Tune the look with FRAME. */
+  const FRAME = {
+    outW: 900, outH: 1200,   // every download is exactly this size (3:4)
+    eyeDist: 0.20,           // distance between the eyes, as a fraction of frame width
+    eyeLine: 0.40,           // eye height, as a fraction of frame height from the top
+    minHeadroom: 0.04        // never less than this much backdrop above the hair
+  };
+
+  let faceDetectorPromise = null;
+  function loadFaceDetector() {
+    if (!faceDetectorPromise) {
+      faceDetectorPromise = (async () => {
+        const base   = 'https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@0.10.14';
+        const vision = await import(base + '/+esm');
+        const files  = await vision.FilesetResolver.forVisionTasks(base + '/wasm');
+        return vision.FaceDetector.createFromOptions(files, {
+          baseOptions: { modelAssetPath: 'https://storage.googleapis.com/mediapipe-models/face_detector/blaze_face_short_range/float16/1/blaze_face_short_range.tflite' },
+          runningMode: 'IMAGE'
+        });
+      })().catch(e => { faceDetectorPromise = null; throw e; });
+    }
+    return faceDetectorPromise;
+  }
+
+  // Returns the two eye positions in pixels, or null if no face was found.
+  async function detectEyes(source, W, H) {
+    const detector = await loadFaceDetector();
+    const faces = detector.detect(source).detections || [];
+    if (!faces.length) return null;
+    // Largest face wins (there should only be one)
+    faces.sort((a, b) => (b.boundingBox.width * b.boundingBox.height) - (a.boundingBox.width * a.boundingBox.height));
+    const k = faces[0].keypoints;
+    if (!k || k.length < 2) return null;
+    return { ax: k[0].x * W, ay: k[0].y * H, bx: k[1].x * W, by: k[1].y * H };
+  }
+
+  // First row (from the top) where the cutout has a meaningful amount of subject
+  function subjectTop(px, W, H) {
+    const need = Math.max(3, Math.round(W * 0.01));
+    for (let y = 0; y < H; y++) {
+      let n = 0;
+      for (let x = 0, i = y * W * 4 + 3; x < W; x++, i += 4) if (px[i] > 128) n++;
+      if (n >= need) return y;
+    }
+    return 0;
+  }
+
+  // Pure maths: where to crop a W×H portrait so the eyes land on the template.
+  // The crop may extend above the image (that area is flat brand colour) but
+  // never past the left, right or bottom edges, where the subject is cut off.
+  function computeHeadshotCrop(W, H, eyes, topY) {
+    const aspect = FRAME.outH / FRAME.outW;
+    const eyeGap = Math.hypot(eyes.bx - eyes.ax, eyes.by - eyes.ay);
+    const eyeX   = (eyes.ax + eyes.bx) / 2;
+    const eyeY   = (eyes.ay + eyes.by) / 2;
+
+    let w = Math.min(eyeGap / FRAME.eyeDist, W, H / aspect);
+    let h = w * aspect;
+    let x = Math.min(Math.max(eyeX - w / 2, 0), W - w);
+    let y = eyeY - FRAME.eyeLine * h;
+    y = Math.min(y, topY - FRAME.minHeadroom * h); // keep backdrop above the hair
+    y = Math.min(y, H - h);                        // never run off the bottom
+    return { x, y, w, h };
+  }
+
+  function renderCrop(src, crop, hex) {
+    const c = document.createElement('canvas');
+    c.width = FRAME.outW; c.height = FRAME.outH;
+    const ctx = c.getContext('2d');
+    ctx.fillStyle = hex;
+    ctx.fillRect(0, 0, c.width, c.height);
+    ctx.imageSmoothingEnabled = true;
+    ctx.imageSmoothingQuality = 'high';
+    const scale = c.width / crop.w;
+    ctx.drawImage(src, -crop.x * scale, -crop.y * scale, src.width * scale, src.height * scale);
+    return c;
+  }
+
+  // Resolves to { dataUrl, cutoutOk, framed } — the flags tell the page
+  // whether to warn the user that a step could not be applied.
   async function cutoutAndComposite(imgDataUrl, targetHex) {
     try {
       const { removeBackground } = await loadBgRemoval();
@@ -758,11 +826,26 @@
       ctx.drawImage(fgCanvas, 0, 0);
       URL.revokeObjectURL(fgUrl);
 
+      // Crop to the shared template so every headshot has the same framing.
+      // If the face cannot be found, keep the uncropped composite and say so.
+      let out = canvas, framed = false;
+      try {
+        const eyes = await detectEyes(rawCanvas, W, H);
+        if (eyes) {
+          const crop = computeHeadshotCrop(W, H, eyes, subjectTop(fpx, W, H));
+          out = renderCrop(canvas, crop, targetHex);
+          framed = true;
+          window._lastFrame = { eyes, crop, W, H }; // debug
+        }
+      } catch (e) {
+        console.warn('Framing step failed, using uncropped composite:', e);
+      }
+
       // PNG keeps the flat brand colour exact — no JPEG ringing around edges
-      return canvas.toDataURL('image/png');
+      return { dataUrl: out.toDataURL('image/png'), cutoutOk: true, framed };
     } catch (e) {
       console.warn('Cutout failed, using original image:', e);
-      return imgDataUrl;
+      return { dataUrl: imgDataUrl, cutoutOk: false, framed: false };
     }
   }
 
@@ -779,60 +862,56 @@
     lilac: { hex: '#FFD4F7' }
   };
 
-/* ─── MAIN GENERATE (single Gemini call, plain studio backdrop) ─── */
-  async function generate() {
-    const clothingVal = getChipVal('clothing-chips') || 'smart-casual';
-    const model   = getChipVal('model-chips') || 'gemini-2.5-flash-image';
-    const bg      = BG_OPTIONS[getChipVal('bg-chips')] || BG_OPTIONS.blue;
+/* ─── MAIN GENERATE: Gemini portrait → cutout → brand colour → framing ─── */
+  let generating = false;
 
-    if (!selfieBase64){ showError('Please upload a selfie first.'); return; }
+  function showResultWarning(msg) {
+    document.getElementById('result-warning-text').textContent = msg;
+    document.getElementById('result-warning').style.display = msg ? 'block' : 'none';
+  }
+
+  async function generate() {
+    const clothing = getChipVal('clothing-chips') || 'smart-casual';
+    const bg       = BG_OPTIONS[getChipVal('bg-chips')] || BG_OPTIONS.blue;
+
+    if (!selfieBase64) { showError('Please upload a selfie first.'); return; }
+    if (generating) return; // ignore double clicks
+    generating = true;
 
     showError('');
+    showResultWarning('');
     showStep(3);
     setLoadingStep(1);
 
+    // Start fetching the cutout and framing tools now, while the portrait is
+    // being generated, so stage 2 does not have to wait for the downloads.
+    loadBgRemoval().then(m => m.preload && m.preload()).catch(() => {});
+    loadFaceDetector().catch(() => {});
+
+    let outcome;
     try {
-      const prompt = `[COMPOSITION — follow exactly]
-- Output is a portrait crop, 3:4 aspect ratio
-- The top of the head must sit within 3% of the top edge of the frame — almost touching the top
-- The subject's eyes must sit at 40–45% from the top of the frame
-- The frame cuts off at upper chest / just below the shoulders
-- The face must be centred horizontally
-- The head and face must fill 85–95% of the frame height — the subject should feel very close and large in frame
-- Zero empty space above the head — crop in tight
-- Both shoulders and upper arms must be complete and fully visible inside the frame, with background visible to the left and right of them — never cut the subject off at the left or right edges
+      const result = await callGemini(selfieBase64, selfieMimeType || 'image/jpeg', clothing);
+      const raw = `data:${result.mime};base64,${result.base64}`;
+      window._rawGen = raw; // debug: raw portrait before cutout, inspectable from the console
 
-[CAMERA & LIGHTING]
-High-end full-frame digital camera, 85mm portrait prime lens. Soft directional studio light, gentle fill on opposite side. Deep depth of field — the ENTIRE subject must be in crisp sharp focus, including both shoulders and all clothing. No blur, haze, mist, smoke, fog, vignette or soft shadow effects anywhere in the image.
-
-[STYLE]
-Clean editorial studio headshot. Modern, confident, approachable. High-end professional portrait photography.
-
-[SUBJECT]
-Transform this selfie into a crisp professional headshot. The face is SACRED — reproduce it with absolute pixel-perfect fidelity. Do NOT smooth skin, slim the face, alter jaw shape, resize eyes, change nose shape, whiten teeth, or modify any facial feature in any way whatsoever. The face in the output must be identical to the face in the input. Same wrinkles, same pores, same asymmetries, same glasses, same expression. Hair and skin tone must also be exactly preserved. ${clothingVal === 'keep'
-  ? 'Keep the subject\'s existing clothing exactly as worn — do not replace or change it. Subtly smarten: remove creases, tidy the collar, ensure it looks well-fitted and polished.'
-  : 'Base the clothing on what the subject is actually wearing in the selfie — same garment types, same colours, recognisably their own look. Present it at its best: freshly laundered and pressed, no creases or stains, collar and seams sitting neatly, well-fitted. Only if a garment is clearly unsuitable for a professional headshot (heavily worn, stained, or gym wear), replace it with the nearest smarter equivalent in the same style and colour — a tired t-shirt becomes a clean well-fitted plain t-shirt, a hoodie becomes a smart knit. Do NOT add a blazer, suit jacket or tie unless the subject is already wearing one, and do not change the overall style of their outfit.'
-} Natural, confident posture, slight forward lean. The selfie may crop off the shoulders or upper arms at the photo edges — you MUST reconstruct the missing shoulders, arms and clothing naturally and completely, matching the visible clothing, pose and body proportions, so the whole head-and-shoulders subject is present in the output. Never leave shoulders missing, incomplete or faded.
-
-[BACKGROUND]
-Fill the entire background with a single flat, solid, uniform very pale icy sky blue — approximately hex #E4F3FF. No gradients, no texture, no shadows, no vignette.
-
-[REFINEMENT]
-No heavy retouching. No lens distortion. No oversaturation. Do not change the person's identity.`;
-
-      const result = await callGemini(model, selfieBase64, selfieMimeType || 'image/jpeg', prompt);
-      resultDataUrl = `data:${result.mime};base64,${result.base64}`;
-      window._rawGen = resultDataUrl; // debug: raw portrait before cutout, inspectable from the console
-
-      // Stage 2: AI cutout of the subject, placed on the exact brand colour.
-      // Falls back to the raw portrait if the cutout fails.
+      // Stage 2: AI cutout of the subject, placed on the exact brand colour,
+      // then cropped to the shared framing template.
       setLoadingStep(2);
-      resultDataUrl = await cutoutAndComposite(resultDataUrl, bg.hex);
+      outcome = await cutoutAndComposite(raw, bg.hex);
     } catch (err) {
       console.error('Generation error:', err);
       showStep(2);
       showError('Generation failed: ' + err.message);
       return;
+    } finally {
+      generating = false;
+    }
+
+    resultDataUrl = outcome.dataUrl;
+    if (!outcome.cutoutOk) {
+      showResultWarning('We could not place this headshot on the brand background because the cutout tool did not load (some office networks block it). The background below is only approximate. Try Regenerate, or try a different network or browser.');
+    } else if (!outcome.framed) {
+      showResultWarning('We could not find the face to size and centre this headshot, so its framing may not match other headshots. Try Regenerate.');
     }
 
     document.getElementById('result-img').src  = resultDataUrl;
